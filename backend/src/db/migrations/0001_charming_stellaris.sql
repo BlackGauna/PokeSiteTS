@@ -1,0 +1,1 @@
+ALTER TABLE "pokemon" ALTER COLUMN "id" SET DATA TYPE smallint;
