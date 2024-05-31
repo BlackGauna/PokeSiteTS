@@ -1,7 +1,7 @@
 import { pgTable, serial, smallint } from "drizzle-orm/pg-core"
 import { NamesTable, PokemonTypes } from "./Shared"
 import { relations } from "drizzle-orm"
-import { PokemonMoves } from "./Pokemon"
+import { PokemonMove } from "./Pokemon"
 
 // export const Ailment = pgEnum("Ailment", [
 //   "unknown",
@@ -47,7 +47,7 @@ export const MoveName = pgTable("move_name", {
 
 export const MoveRelations = relations(Move, ({ many }) => ({
   names: many(MoveName),
-  pokemon: many(PokemonMoves),
+  pokemon: many(PokemonMove),
 }))
 
 export const MoveNameRelations = relations(MoveName, ({ one }) => ({

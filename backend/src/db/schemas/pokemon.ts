@@ -30,7 +30,7 @@ export const PokemonName = pgTable("pokemon_name", {
 
 export const pokemonRelations = relations(Pokemon, ({ many }) => ({
   names: many(PokemonName),
-  moves: many(PokemonMoves),
+  moves: many(PokemonMove),
 }))
 
 export const pokemonNameRelations = relations(PokemonName, ({ one }) => ({
@@ -54,7 +54,7 @@ export const moveLearnMethod = pgEnum("move_learn_method", [
   "zygarde-cube",
 ])
 
-export const PokemonMoves = pgTable("pokemon_moves", {
+export const PokemonMove = pgTable("pokemon_move", {
   pokemonId: smallint("pokemon_id")
     .references(() => Pokemon.id)
     .notNull(),

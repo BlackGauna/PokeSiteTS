@@ -1,6 +1,6 @@
 import { pgEnum, serial, text } from "drizzle-orm/pg-core"
 
-export const PokemonTypes = pgEnum("types", [
+export const PokemonTypes = pgEnum("type", [
   "normal",
   "fighting",
   "flying",
@@ -23,7 +23,7 @@ export const PokemonTypes = pgEnum("types", [
   "unknown",
 ])
 
-export const Languages = pgEnum("languages", [
+export const Languages = pgEnum("language", [
   "roomaji",
   "ko",
   "zh-Hant",
@@ -40,6 +40,6 @@ export const Languages = pgEnum("languages", [
 
 export const NamesTable = {
   id: serial("id").primaryKey(),
-  language: Languages("languages").notNull(),
+  language: Languages("language").notNull(),
   name: text("name").notNull(),
 }
