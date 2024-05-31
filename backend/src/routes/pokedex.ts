@@ -3,7 +3,7 @@ import Elysia from "elysia"
 import { db } from "src/db/db"
 
 const pokedexRoutes = new Elysia({ prefix: "/" }).get("/", async () => {
-  const result = await db.query.Pokemons.findFirst({
+  const result = await db.query.Pokemon.findFirst({
     with: { names: true },
   })
 

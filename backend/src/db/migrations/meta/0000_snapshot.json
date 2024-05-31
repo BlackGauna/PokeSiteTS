@@ -1,16 +1,65 @@
 {
-  "id": "c2c60add-c9bc-467c-a9e8-5e13f89c4855",
+  "id": "4697aef0-3f95-4edf-9c57-27baa7586e33",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "6",
   "dialect": "postgresql",
   "tables": {
+    "public.pokemonNames": {
+      "name": "pokemonNames",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "languages": {
+          "name": "languages",
+          "type": "languages",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pokemonId": {
+          "name": "pokemonId",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pokemonNames_pokemonId_pokemon_id_fk": {
+          "name": "pokemonNames_pokemonId_pokemon_id_fk",
+          "tableFrom": "pokemonNames",
+          "tableTo": "pokemon",
+          "columnsFrom": [
+            "pokemonId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
     "public.pokemon": {
       "name": "pokemon",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "smallint",
           "primaryKey": true,
           "notNull": true
         },
@@ -24,10 +73,37 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "pokemon_name_unique": {
+          "name": "pokemon_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      }
     }
   },
-  "enums": {},
+  "enums": {
+    "public.languages": {
+      "name": "languages",
+      "schema": "public",
+      "values": [
+        "roomaji",
+        "ko",
+        "zh-Hant",
+        "fr",
+        "de",
+        "es",
+        "it",
+        "en",
+        "cs",
+        "ja",
+        "zh-Hans",
+        "pt-BR"
+      ]
+    }
+  },
   "schemas": {},
   "_meta": {
     "columns": {},

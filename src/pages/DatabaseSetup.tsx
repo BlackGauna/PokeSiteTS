@@ -93,11 +93,11 @@ function DatabaseSetup() {
   }
 
   // TODO: method to filter the data from api and send to db
-  // const filterPokemonData = async (pokemonApi: Pokemon) => {
-  //   const res = await client.admin.setup.pokedex.$post({
-  //     json: {},
-  //   })
-  // }
+  const filterPokemonData = async (pokemonApi: Pokemon) => {
+    const res = await client.admin.setup.pokedex.post({
+      
+    })
+  }
 
   return (
     <div className="flex h-screen place-items-center justify-center gap-10">
