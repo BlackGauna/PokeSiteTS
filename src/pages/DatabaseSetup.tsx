@@ -18,6 +18,13 @@ const client = treaty<App>(import.meta.env.VITE_SERVER_URL)
 function DatabaseSetup() {
   // const [pokemonData, setPokemonData] = useState({})
 
+  const test = async () => {
+    console.log("testing")
+
+    const res = await client.index.get()
+    console.log(res)
+  }
+
   const [logOutput, setLogOutput] = useState(<div></div>)
   const logRef = useRef<HTMLDivElement>(null)
 
@@ -94,9 +101,7 @@ function DatabaseSetup() {
 
   // TODO: method to filter the data from api and send to db
   const filterPokemonData = async (pokemonApi: Pokemon) => {
-    const res = await client.admin.setup.pokedex.post({
-      
-    })
+    const res = await client.admin.setup.pokedex.post({})
   }
 
   return (
