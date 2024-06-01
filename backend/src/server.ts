@@ -11,6 +11,16 @@ import cors from "@elysiajs/cors"
 //   .route("/admin/setup", setupRoutes)
 
 const app = new Elysia()
+  .onAfterHandle(({ request, set }) => {
+    // Only process CORS requests
+    if (request.method !== "OPTIONS") return
+
+    const allowHeader = set.headers["Access-Control-Allow-Headers"]
+    if (allowHeader === "*") {
+      set.headers["Access-Control-Allow-Headers"] =
+        request.headers.get("Access-Control-Request-Headers") ?? ""
+    }
+  })
   .use(cors())
   .get("/", () => "Hi")
   .group("/api", app => app.use(pokedexRoutes))
