@@ -12,6 +12,7 @@ import cors from "@elysiajs/cors"
 
 const app = new Elysia()
   .use(cors())
+  .get("/", () => "Hi")
   .group("/api", app => app.use(pokedexRoutes))
   .group("/admin/setup", app => app.use(setupRoutes))
   .listen(3000)
