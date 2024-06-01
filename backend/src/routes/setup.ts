@@ -7,16 +7,11 @@ import { eq } from "drizzle-orm"
 import { createInsertSchema } from "drizzle-typebox"
 import { PokemonName, Pokemon } from "@schemas/Pokemon"
 
-const poop = t.Object({
-  id: t.Number(),
-  name: t.String(),
-})
+const type = createInsertSchema(Pokemon)
 export const pokemonNameSchema = createInsertSchema(PokemonName)
 
-const type = createInsertSchema(Pokemon)
-
 const setupRoutes = new Elysia()
-  .get("/pokedex", () => getPokemonFromApi(1, 2))
+  .get("/pokedex", () => getPokemonFromApi(1, 5))
 
   .post(
     "/pokedex",
@@ -53,5 +48,13 @@ const setupRoutes = new Elysia()
       }),
     },
   )
+
+const typetest = db.query.Pokemon.findFirst({
+  where: eq(Pokemon.id, 1),
+  with: {
+    moves: true,
+    names: true,
+  },
+})
 
 export default setupRoutes

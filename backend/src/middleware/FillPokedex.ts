@@ -1,5 +1,19 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { AxiosError } from "axios"
 import Pokedex from "pokedex-promise-v2"
+import { PokemonType } from "@schemas/Pokemon"
+import {
+  findEnglishName,
+  generateNamesArray,
+  generateStats,
+  generateTypes,
+} from "src/utils/api2db"
+
+type PokemonApi = {
+  pokemon: Pokedex.Pokemon
+  species: Pokedex.PokemonSpecies
+}
+
 const P = new Pokedex()
 
 export async function getPokemonFromApi(id: number, end?: number) {
@@ -7,19 +21,20 @@ export async function getPokemonFromApi(id: number, end?: number) {
     const ids = [...Array(end - id + 1).keys()].map(x => x + id)
 
     // TODO: maybe simplify by calling method with array of ids, see library info
-    const pokedex: Pokedex.Pokemon[] = []
+    const pokedex: PokemonApi[] = []
     try {
-      await Promise.all(
-        ids.map(async id => {
-          const pokemon = await P.getPokemonByName(id)
-          console.log(pokemon?.name)
-          pokedex.push(pokemon)
-        }),
-      )
+      for (const id of ids) {
+        // Grouping does not work currently in bun, so have add manual indentation inside group
+        console.group(`Getting pokemon with id: ${id}`)
 
-      // const pokemonTest = await P.getPokemonByName(1)
+        console.info("  Getting pokemon info...")
+        const pokemon = await P.getPokemonByName(id)
+        console.info("  Getting species info...")
+        const species = await P.getPokemonSpeciesByName(pokemon.species.name)
 
-      // pokedex.push(pokemonTest)
+        pokedex.push({ pokemon, species })
+        console.groupEnd()
+      }
     } catch (error) {
       console.error("An error occured while getting data from pokeapi")
 
@@ -29,26 +44,45 @@ export async function getPokemonFromApi(id: number, end?: number) {
         throw error.toJSON()
       } else throw error
     }
-    console.log("got all pokemon, sending to client")
+    console.info("got all pokemon, sending to client")
 
     pokedex.sort((a, b) => {
-      return a.id - b.id
+      return a.pokemon.id - b.pokemon.id
     })
-    return pokedex
-  } else {
-    let pokemon: Pokedex.Pokemon
 
-    try {
-      pokemon = await P.getPokemonByName(id)
-    } catch (error) {
-      console.error("An error occured while getting data from pokeapi")
+    // return pokedex.length > 1 ? pokedex : pokedex[0]
 
-      if (error instanceof AxiosError) {
-        console.log(error.toJSON())
-
-        throw error.toJSON()
-      } else throw error
-    }
-    return pokemon
+    const cleanPokedex = await preparePokemonData(pokedex)
+    return cleanPokedex
   }
+}
+
+async function preparePokemonData(pokemonsApi: PokemonApi[]) {
+  const pokemonsDbArray: PokemonType[] = []
+
+  for (const pokemonApiElement of pokemonsApi) {
+    const pokemonApiData = pokemonApiElement.pokemon
+    const speciesApiData = pokemonApiElement.species
+
+    const namesDb = generateNamesArray(speciesApiData.names, pokemonApiData.id)
+    const stats = generateStats(pokemonApiData.stats)
+    const types = generateTypes(pokemonApiData.types)
+
+    const pokemonDb: PokemonType = {
+      id: pokemonApiData.id,
+      name: findEnglishName(namesDb),
+      hp: stats.hp,
+      atk: stats.atk,
+      spAtk: stats.spAtk,
+      def: stats.def,
+      spDef: stats.spDef,
+      speed: stats.speed,
+      type: types.type,
+      type2: types.type2,
+    }
+
+    pokemonsDbArray.push(pokemonDb)
+  }
+
+  return pokemonsDbArray
 }

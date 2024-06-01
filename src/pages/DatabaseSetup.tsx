@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 import type { App } from "@server/server"
 import { treaty } from "@elysiajs/eden"
-import { Pokemon } from "pokedex-promise-v2"
 // import { hc } from "hono/client"
 // import axios from "axios"
 
@@ -18,38 +17,29 @@ const client = treaty<App>(import.meta.env.VITE_SERVER_URL)
 function DatabaseSetup() {
   // const [pokemonData, setPokemonData] = useState({})
 
-  const test = async () => {
-    console.log("testing")
-
-    const res = await client.index.get()
-    console.log(res)
-  }
-
   const [logOutput, setLogOutput] = useState(<div></div>)
   const logRef = useRef<HTMLDivElement>(null)
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isPending, error, data, fetchStatus, refetch, isFetching } = useQuery(
-    {
-      queryKey: ["pokeapiData"],
-      queryFn: async () => {
-        await new Promise(r => setTimeout(r, 3000))
+  const { isPending, error, data, fetchStatus, refetch } = useQuery({
+    queryKey: ["pokeapiData"],
+    queryFn: async () => {
+      await new Promise(r => setTimeout(r, 3000))
 
-        // using ElysiaJS Treaty as axios alternative
-        const res = await client.admin.setup.pokedex.get()
+      // using ElysiaJS Treaty as axios alternative
+      const res = await client.admin.setup.pokedex.get()
 
-        if (res.error) {
-          throw res.error
-        }
+      if (res.error) {
+        throw res.error
+      }
 
-        return res.data
-      },
-      enabled: false,
+      return res.data
     },
-  )
+    enabled: false,
+  })
 
   useEffect(() => {
-    console.log("isFetching: ", isFetching)
+    console.log("isPending: ", isPending)
     if (error) {
       setLogOutput(log => (
         <>
@@ -59,7 +49,7 @@ function DatabaseSetup() {
       ))
     }
 
-    if (!isPending && !error && !isFetching) {
+    if (!isPending && !error) {
       setLogOutput(log => (
         <>
           {log}
@@ -67,17 +57,21 @@ function DatabaseSetup() {
         </>
       ))
     }
-  }, [isPending, fetchStatus, error, isFetching])
+  }, [isPending, fetchStatus, error])
 
   useEffect(() => {
     if (data) {
       console.log("data", data)
 
+      // data.map(el => {
+      //   console.log(el)
+      // })
+
       setLogOutput(log => (
         <>
           {log}
           <p>got data:</p>
-          {data.map((pokemon: Pokemon) => (
+          {data.map(pokemon => (
             <p key={pokemon.id} className="ps-8">
               {pokemon.name}
             </p>
@@ -99,19 +93,14 @@ function DatabaseSetup() {
     refetch()
   }
 
-  // TODO: method to filter the data from api and send to db
-  const filterPokemonData = async (pokemonApi: Pokemon) => {
-    const res = await client.admin.setup.pokedex.post({})
-  }
-
   return (
     <div className="flex h-screen place-items-center justify-center gap-10">
       <button
         className="ml-8 flex w-60 justify-center rounded-lg bg-blue-500 p-2 font-bold disabled:bg-blue-400 "
         onClick={onClickGetPokedex}
-        disabled={isFetching}
+        disabled={fetchStatus !== "idle" && isPending}
       >
-        {isFetching ? (
+        {fetchStatus !== "idle" && isPending ? (
           // Animated Spinner from https://github.com/n3r4zzurr0/svg-spinners/
           <>
             <svg

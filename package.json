@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev2": "bunx --bun vite",
-    "dev": "concurrently \"cd backend && bun run --watch src/server.ts\" \"bunx --bun vite\"",
+    "dev": "concurrently \"cd backend && bun run --hot src/server.ts\" \"bunx --bun vite\"",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"

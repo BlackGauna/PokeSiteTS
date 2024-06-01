@@ -3,7 +3,10 @@ import { pgEnum, pgTable, smallint, text } from "drizzle-orm/pg-core"
 import { NamesTable, PokemonTypes } from "./Shared"
 import { relations } from "drizzle-orm"
 import { Move } from "./Move"
+import { createInsertSchema } from "drizzle-typebox"
+import { Static } from "elysia"
 
+// TODO: add effort value gain when defeated, eg. 1 attack ev
 export const Pokemon = pgTable("pokemon", {
   id: smallint("id").primaryKey(),
   name: text("name").notNull().unique(),
@@ -65,6 +68,9 @@ export const PokemonMove = pgTable("pokemon_move", {
   level: smallint("level").notNull().default(0),
 })
 
-// TODO: NOT WORKING ON VS CODE FOR SOME REASON; NEED TO CHECK!!!! ON CLIENT-SIDE ONLY TYPES UNKNOWN
-// export const insertPokemon = createInsertSchema(Pokemons)
-// export const insertPokemonName = createInsertSchema(PokemonNames)
+// TODO: NOT WORKING ON VS CODE FOR SOME REASON FOR RPC; NEED TO CHECK!!!! ON CLIENT-SIDE ONLY TYPES UNKNOWN SHOWN
+export const insertPokemon = createInsertSchema(Pokemon)
+export const insertPokemonName = createInsertSchema(PokemonName)
+
+export type PokemonType = Static<typeof insertPokemon>
+export type PokemonNameType = Static<typeof insertPokemonName>

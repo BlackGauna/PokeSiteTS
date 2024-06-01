@@ -23,6 +23,8 @@ export const PokemonTypes = pgEnum("type", [
   "unknown",
 ])
 
+export type Type = (typeof PokemonTypes.enumValues)[number]
+
 export const Languages = pgEnum("language", [
   "roomaji",
   "ko",
