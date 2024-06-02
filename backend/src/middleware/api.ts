@@ -25,6 +25,7 @@ export const insertNewPokemonData = async (
       ...name,
       pokemonId: pokemonId,
     }))
+
     await tx.insert(PokemonName).values(pokemonNamesWithId)
 
     return pokemonId

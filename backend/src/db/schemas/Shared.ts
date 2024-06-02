@@ -41,6 +41,8 @@ export const Languages = pgEnum("language", [
   "pt-BR",
 ])
 
+export type Languages = (typeof Languages.enumValues)[number]
+
 export const NamesTable = {
   id: serial("id").primaryKey(),
   language: Languages("language").notNull(),

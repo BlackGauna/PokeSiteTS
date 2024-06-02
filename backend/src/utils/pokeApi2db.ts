@@ -1,5 +1,5 @@
 import { PokemonNameType } from "@schemas/Pokemon"
-import { Type } from "@schemas/Shared"
+import { Languages, Type } from "@schemas/Shared"
 import {
   NamedAPIResource,
   PokemonSpecies,
@@ -16,7 +16,7 @@ export const generateNamesArray = (
   const namesDb: PokemonNameType[] = []
   for (const nameApi of namesApiArray) {
     namesDb.push({
-      language: nameApi.language.name as PokemonNameType["language"],
+      language: nameApi.language.name as Languages,
       name: nameApi.name,
       pokemonId: pokemonId,
     })
