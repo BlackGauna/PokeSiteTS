@@ -1,31 +1,27 @@
-import { PokemonNameType } from "@schemas/Pokemon"
-import { Languages, Type } from "@schemas/Shared"
+import { Languages, NamesTableType, Type } from "@schemas/Shared"
 import {
+  MoveName,
   NamedAPIResource,
-  PokemonSpecies,
+  PokemonSpeciesName,
   PokemonType,
   StatElement,
 } from "pokedex-promise-v2"
 
-type PokemonNamesApi = PokemonSpecies["names"]
-
 export const generateNamesArray = (
-  namesApiArray: PokemonNamesApi,
-  pokemonId: number,
-): PokemonNameType[] => {
-  const namesDb: PokemonNameType[] = []
+  namesApiArray: PokemonSpeciesName[] | MoveName[],
+): NamesTableType[] => {
+  const namesDb = []
+
   for (const nameApi of namesApiArray) {
     namesDb.push({
       language: nameApi.language.name as Languages,
       name: nameApi.name,
-      pokemonId: pokemonId,
     })
   }
-
   return namesDb
 }
 
-export const findEnglishName = (names: PokemonNameType[]) => {
+export const findEnglishName = (names: NamesTableType[]) => {
   const name = names.find(element => element.language === "en")
   return name!.name
 }
@@ -88,9 +84,7 @@ export const generateStats = (statsApiArray: StatElement[]): Stats => {
   return statsDb
 }
 
-export const generateTypes = (
-  typesApiArray: PokemonType[] | NamedAPIResource,
-) => {
+export const generateTypes = (typesApiArray: PokemonType[] | NamedAPIResource) => {
   let types = []
   if (Array.isArray(typesApiArray)) {
     types = typesApiArray.map(element => element.type)

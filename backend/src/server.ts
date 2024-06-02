@@ -6,11 +6,6 @@ import Elysia from "elysia"
 import cors from "@elysiajs/cors"
 import { testGetPokemonFromApi } from "./middleware/FillPokedex"
 
-// const app = new Hono()
-//   .use("/", cors())
-//   .route("/api", pokedexRoutes)
-//   .route("/admin/setup", setupRoutes)
-
 const app = new Elysia()
   .use(cors())
   .get("/", () => "Hi")
@@ -18,11 +13,7 @@ const app = new Elysia()
   .group("/admin/setup", app => app.use(setupRoutes))
   .listen(3000)
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
-)
-
-// console.log("url:", process.env.DATABASE_URL)
+console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`)
 
 const test = testGetPokemonFromApi()
 console.log(test)

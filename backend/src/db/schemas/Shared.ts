@@ -1,4 +1,6 @@
-import { pgEnum, serial, text } from "drizzle-orm/pg-core"
+import { pgEnum, pgTable, serial, text } from "drizzle-orm/pg-core"
+import { createInsertSchema } from "drizzle-typebox"
+import { Static } from "elysia"
 
 export const PokemonTypes = pgEnum("type", [
   "normal",
@@ -48,6 +50,8 @@ export const NamesTable = {
   language: Languages("language").notNull(),
   name: text("name").notNull(),
 }
+const insertNameTable = createInsertSchema(pgTable("NOT_USED", { ...NamesTable }))
+export type NamesTableType = Static<typeof insertNameTable>
 
 export const VersionGroup = [
   "red-blue",

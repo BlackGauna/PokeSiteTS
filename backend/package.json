@@ -9,14 +9,11 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.0.2",
-    "@hono/typebox-validator": "^0.2.4",
-    "@hono/zod-validator": "^0.2.1",
     "@sinclair/typebox": "^0.32.31",
     "drizzle-orm": "^0.30.10",
     "drizzle-typebox": "^0.1.1",
     "drizzle-zod": "^0.5.1",
     "elysia": "^1.0.22",
-    "hono": "^4.4.2",
     "pokedex-promise-v2": "^4.2.0",
     "postgres": "^3.4.4"
   },

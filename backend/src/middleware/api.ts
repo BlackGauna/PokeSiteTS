@@ -1,20 +1,20 @@
-import { Move, MoveName, MoveNameType, MoveType } from "@schemas/Move"
+import { Move, MoveName, MoveType } from "@schemas/Move"
 import {
   LearnMethod,
   Pokemon,
   PokemonMove,
   PokemonMoveType,
   PokemonName,
-  PokemonNameType,
   PokemonType,
 } from "@schemas/Pokemon"
-import { VersionGroup } from "@schemas/Shared"
+import { NamesTableType, VersionGroup } from "@schemas/Shared"
 import { eq } from "drizzle-orm"
 import { db } from "src/db/db"
 
+// TODO: add try catch blocks for queries
 export const insertNewPokemonData = async (
   pokemon: PokemonType,
-  pokemonNames: PokemonNameType[],
+  pokemonNames: NamesTableType[],
 ) => {
   return await db.transaction(async tx => {
     const pokemonId = (
@@ -38,7 +38,7 @@ export const insertNewPokemonData = async (
 
 export type LearnedMove = {
   move: MoveType
-  moveNames: MoveNameType[]
+  moveNames: NamesTableType[]
   pokemonId: number
   learnMethod: LearnMethod
   level: number

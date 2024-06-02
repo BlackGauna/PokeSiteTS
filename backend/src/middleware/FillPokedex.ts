@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AxiosError } from "axios"
 import Pokedex from "pokedex-promise-v2"
-import { LearnMethod, PokemonMoveType, PokemonType } from "@schemas/Pokemon"
+import { LearnMethod, PokemonMoveType, PokemonNameType, PokemonType } from "@schemas/Pokemon"
 import {
   findEnglishName,
   generateNamesArray,
@@ -75,16 +75,12 @@ export async function getPokemonFromApi(id: number, end?: number) {
 
 async function preparePokemonData(pokemonsApi: PokemonApi[]) {
   const pokemonsDbArray: PokemonType[] = []
-  const movesArray: unknown = []
 
   for (const pokemonApiElement of pokemonsApi) {
     const pokemonApiData = pokemonApiElement.pokemon
     const speciesApiData = pokemonApiElement.species
 
-    const pokemonNamesDb = generateNamesArray(
-      speciesApiData.names,
-      pokemonApiData.id,
-    )
+    const pokemonNamesDb = generateNamesArray(speciesApiData.names)
     const stats = generateStats(pokemonApiData.stats)
     const types = generateTypes(pokemonApiData.types)
 
@@ -103,58 +99,44 @@ async function preparePokemonData(pokemonsApi: PokemonApi[]) {
 
     const pokemonId = await insertNewPokemonData(pokemonDb, pokemonNamesDb)
     console.info("  Getting moves info...")
-    const moves = await getPokemonMoves(pokemonApiData.moves, pokemonId)
-
-    // pokemonsDbArray.push(pokemonDb)
-    // movesArray.push(moves)
+    await getPokemonMoves(pokemonApiData.moves, pokemonId)
   }
 
-  return { pokemonsDbArray, movesArray }
+  return { pokemonsDbArray }
 }
 
-const getPokemonMoves = async (
-  movesElementArray: Pokedex.MoveElement[],
-  pokemonId: number,
-) => {
+const getPokemonMoves = async (movesElementArray: Pokedex.MoveElement[], pokemonId: number) => {
   const versionGroups = ["ruby-sapphire", "emerald"] as const
   type versionGroups = (typeof versionGroups)[number]
 
   const movesDbArray: MoveType[] = []
 
-  // TODO: combine both for loops for optimization
+  // TODO: combine both loops for optimization
   const filteredByVersion = movesElementArray.filter(async moveElement => {
     for (const versionDetails of moveElement.version_group_details) {
-      return (
-        versionGroups.indexOf(
-          versionDetails.version_group.name as versionGroups,
-        ) !== -1
-      )
+      return versionGroups.indexOf(versionDetails.version_group.name as versionGroups) !== -1
     }
   })
 
-  // const path = "@tests/json.json"
-  // await Bun.write(path, JSON.stringify(filteredByVersion))
-
   for (const moveElement of filteredByVersion) {
-    const pokemonLearnedMovesDbArray = []
     const moveApi = await P.getMoveByName(moveElement.move.name)
 
     const moveDb = await prepareMove(moveApi)
+    const moveNames = await generateNamesArray(moveApi.names)
 
     for (const learnMethodPerVersion of moveElement.version_group_details) {
       const moveForDb: LearnedMove = {
         move: moveDb,
-        moveNames: [],
+        moveNames: moveNames,
         pokemonId: pokemonId,
-        learnMethod: learnMethodPerVersion.move_learn_method
-          .name as LearnMethod,
+        learnMethod: learnMethodPerVersion.move_learn_method.name as LearnMethod,
         level: learnMethodPerVersion.level_learned_at,
         version: learnMethodPerVersion.version_group.name as VersionGroup,
       }
       const result = insertPokemonMoveData(moveForDb)
+
       const path = "@tests/json.json"
       await Bun.write(path, JSON.stringify(result))
-      // pokemonLearnedMovesDbArray.push(moveForDb)
     }
   }
 
@@ -172,20 +154,6 @@ const prepareMove = async (moveApi: Pokedex.Move) => {
   return moveDb
 }
 
-const prepareMoves = (movesApiArray: Pokedex.Move[]) => {
-  const movesDbArray: MoveType[] = []
-
-  for (const moveApi of movesApiArray) {
-    movesDbArray.push({
-      type: generateTypes(moveApi.type).type,
-      power: moveApi.power,
-      accuracy: moveApi.accuracy,
-      pp: moveApi.pp!,
-      priority: moveApi.priority,
-    })
-  }
-}
-
 export const testGetPokemonFromApi = () => {
   preparePokemonData([
     {
@@ -193,4 +161,6 @@ export const testGetPokemonFromApi = () => {
       species: RATTATA_SPECIES,
     },
   ])
+
+  // generateNamesArray(RATTATA_SPECIES.names)
 }

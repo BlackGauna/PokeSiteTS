@@ -71,6 +71,17 @@ export const PokemonMove = pgTable("pokemon_move", {
   version: versionGroups("version").notNull(),
 })
 
+export const pokemonMoveRelations = relations(PokemonMove, ({ one }) => ({
+  pokemon: one(Pokemon, {
+    fields: [PokemonMove.pokemonId],
+    references: [Pokemon.id],
+  }),
+  move: one(Move, {
+    fields: [PokemonMove.moveId],
+    references: [Move.id],
+  }),
+}))
+
 // TODO: NOT WORKING ON VS CODE FOR SOME REASON FOR RPC; NEED TO CHECK!!!! ON CLIENT-SIDE ONLY TYPES UNKNOWN SHOWN
 export const insertPokemon = createInsertSchema(Pokemon)
 export const insertPokemonName = createInsertSchema(PokemonName)
