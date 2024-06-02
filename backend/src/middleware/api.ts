@@ -18,7 +18,11 @@ export const insertNewPokemonData = async (
 ) => {
   return await db.transaction(async tx => {
     const pokemonId = (
-      await tx.insert(Pokemon).values(pokemon).returning({ id: Pokemon.id })
+      await tx
+        .insert(Pokemon)
+        .values(pokemon)
+        .onConflictDoUpdate({ target: Pokemon.id, set: { ...pokemon } })
+        .returning({ id: Pokemon.id })
     )[0].id
 
     const pokemonNamesWithId = pokemonNames.map(name => ({
@@ -44,7 +48,11 @@ export type LearnedMove = {
 export const insertPokemonMoveData = async (learnedMove: LearnedMove) => {
   return await db.transaction(async tx => {
     const moveId = (
-      await tx.insert(Move).values(learnedMove.move).returning({ id: Move.id })
+      await tx
+        .insert(Move)
+        .values(learnedMove.move)
+        .onConflictDoNothing()
+        .returning({ id: Move.id })
     )[0].id
 
     const pokemonMove: PokemonMoveType = {
@@ -54,14 +62,14 @@ export const insertPokemonMoveData = async (learnedMove: LearnedMove) => {
       level: learnedMove.level,
       version: learnedMove.version,
     }
-    await tx.insert(PokemonMove).values(pokemonMove)
+    await tx.insert(PokemonMove).values(pokemonMove).onConflictDoNothing()
 
     const moveNamesWithId = learnedMove.moveNames.map(name => ({
       ...name,
       moveId: moveId,
     }))
 
-    await tx.insert(MoveName).values(moveNamesWithId)
+    await tx.insert(MoveName).values(moveNamesWithId).onConflictDoNothing()
 
     return await tx.query.Pokemon.findFirst({
       where: eq(Pokemon.id, learnedMove.pokemonId),
