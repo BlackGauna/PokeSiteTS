@@ -1,6 +1,11 @@
 import { PokemonNameType } from "@schemas/Pokemon"
 import { Type } from "@schemas/Shared"
-import { PokemonSpecies, PokemonType, StatElement } from "pokedex-promise-v2"
+import {
+  NamedAPIResource,
+  PokemonSpecies,
+  PokemonType,
+  StatElement,
+} from "pokedex-promise-v2"
 
 type PokemonNamesApi = PokemonSpecies["names"]
 
@@ -83,9 +88,18 @@ export const generateStats = (statsApiArray: StatElement[]): Stats => {
   return statsDb
 }
 
-export const generateTypes = (typesApiArray: PokemonType[]) => {
-  const type = typesApiArray[0].type.name as Type
-  const type2 = (typesApiArray[1]?.type.name as Type) ?? null
+export const generateTypes = (
+  typesApiArray: PokemonType[] | NamedAPIResource,
+) => {
+  let types = []
+  if (Array.isArray(typesApiArray)) {
+    types = typesApiArray.map(element => element.type)
+  } else {
+    types.push(typesApiArray)
+  }
+
+  const type = types[0].name as Type
+  const type2 = (types[1]?.name as Type) ?? null
 
   return { type, type2 }
 }

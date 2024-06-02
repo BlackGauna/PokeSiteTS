@@ -4,6 +4,7 @@ import setupRoutes from "./routes/setup"
 import pokedexRoutes from "./routes/pokedex"
 import Elysia from "elysia"
 import cors from "@elysiajs/cors"
+import { testGetPokemonFromApi } from "./middleware/FillPokedex"
 
 // const app = new Hono()
 //   .use("/", cors())
@@ -22,5 +23,8 @@ console.log(
 )
 
 // console.log("url:", process.env.DATABASE_URL)
+
+const test = testGetPokemonFromApi()
+console.log(test)
 
 export type App = typeof app

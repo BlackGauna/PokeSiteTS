@@ -2,6 +2,8 @@ import { pgTable, serial, smallint } from "drizzle-orm/pg-core"
 import { NamesTable, PokemonTypes } from "./Shared"
 import { relations } from "drizzle-orm"
 import { PokemonMove } from "./Pokemon"
+import { createInsertSchema } from "drizzle-typebox"
+import { Static } from "elysia"
 
 // export const Ailment = pgEnum("Ailment", [
 //   "unknown",
@@ -28,8 +30,8 @@ import { PokemonMove } from "./Pokemon"
 
 export const Move = pgTable("move", {
   id: serial("id").primaryKey(),
-  power: smallint("power").notNull(),
-  accuracy: smallint("accuracy").notNull(),
+  power: smallint("power"),
+  accuracy: smallint("accuracy"),
   pp: smallint("pp").notNull(),
   priority: smallint("priority").notNull(),
   type: PokemonTypes("type").notNull(),
@@ -56,3 +58,8 @@ export const MoveNameRelations = relations(MoveName, ({ one }) => ({
     references: [Move.id],
   }),
 }))
+
+const insertMove = createInsertSchema(Move)
+export type MoveType = Static<typeof insertMove>
+const insertMoveName = createInsertSchema(MoveName)
+export type MoveNameType = Static<typeof insertMoveName>

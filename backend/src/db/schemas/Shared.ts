@@ -26,6 +26,7 @@ export const PokemonTypes = pgEnum("type", [
 export type Type = (typeof PokemonTypes.enumValues)[number]
 
 export const Languages = pgEnum("language", [
+  "ja-Hrkt",
   "roomaji",
   "ko",
   "zh-Hant",
@@ -45,3 +46,29 @@ export const NamesTable = {
   language: Languages("language").notNull(),
   name: text("name").notNull(),
 }
+
+export const VersionGroup = [
+  "red-blue",
+  "yellow",
+  "gold-silver",
+  "crystal",
+  "ruby-sapphire",
+  "emerald",
+  "firered-leafgreen",
+  "diamond-pearl",
+  "platinum",
+  "heartgold-soulsilver",
+  "black-white",
+  "colosseum",
+  "xd",
+  "black-2-white-2",
+  "x-y",
+  "omega-ruby-alpha-sapphire",
+  "sun-moon",
+  "ultra-sun-ultra-moon",
+  "lets-go-pikachu-lets-go-eevee",
+  "sword-shield",
+] as const
+export type VersionGroup = (typeof VersionGroup)[number]
+
+export const versionGroups = pgEnum("version_groups", VersionGroup)
