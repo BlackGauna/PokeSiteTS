@@ -45,42 +45,49 @@ export type LearnedMove = {
   version: VersionGroup
 }
 
+// TODO: refactor into two separate functions for Moves and PokemonMoves
 export const insertPokemonMoveData = async (learnedMove: LearnedMove) => {
   return await db.transaction(async tx => {
-    try {
-      const moveId = (
+    let moveId = (
+      await tx.query.Move.findFirst({
+        where: eq(Move.name, learnedMove.move.name),
+        columns: {
+          id: true,
+        },
+      })
+    )?.id
+
+    if (typeof moveId !== "number") {
+      moveId = (
         await tx
           .insert(Move)
           .values(learnedMove.move)
-          .onConflictDoNothing()
           .returning({ id: Move.id })
+          .onConflictDoNothing()
       )[0].id
-
-      const pokemonMove: PokemonMoveType = {
-        pokemonId: learnedMove.pokemonId,
-        moveId: moveId,
-        learnMethod: learnedMove.learnMethod,
-        level: learnedMove.level,
-        version: learnedMove.version,
-      }
-      await tx.insert(PokemonMove).values(pokemonMove).onConflictDoNothing()
-
-      const moveNamesWithId = learnedMove.moveNames.map(name => ({
-        ...name,
-        moveId: moveId,
-      }))
-
-      await tx.insert(MoveName).values(moveNamesWithId).onConflictDoNothing()
-
-      return await tx.query.Pokemon.findFirst({
-        where: eq(Pokemon.id, learnedMove.pokemonId),
-        with: {
-          moves: true,
-        },
-      })
-    } catch (error) {
-      console.log("ERROR AT MOVE: ", learnedMove.move.name, " ", learnedMove.version)
-      console.log(JSON.stringify(learnedMove))
     }
+
+    const pokemonMove: PokemonMoveType = {
+      pokemonId: learnedMove.pokemonId,
+      moveId: moveId,
+      learnMethod: learnedMove.learnMethod,
+      level: learnedMove.level,
+      version: learnedMove.version,
+    }
+    await tx.insert(PokemonMove).values(pokemonMove).onConflictDoNothing()
+
+    const moveNamesWithId = learnedMove.moveNames.map(name => ({
+      ...name,
+      moveId: moveId,
+    }))
+
+    await tx.insert(MoveName).values(moveNamesWithId).onConflictDoNothing()
+
+    return await tx.query.Pokemon.findFirst({
+      where: eq(Pokemon.id, learnedMove.pokemonId),
+      with: {
+        moves: true,
+      },
+    })
   })
 }
