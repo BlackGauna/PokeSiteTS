@@ -1,5 +1,5 @@
 {
-  "id": "c86c0e78-de1a-48a2-98a1-42a7299332a0",
+  "id": "b6064521-7c08-410a-8d51-e6c8fe1989f2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "6",
   "dialect": "postgresql",
@@ -12,6 +12,12 @@
           "name": "id",
           "type": "serial",
           "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true
         },
         "power": {
@@ -49,7 +55,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "move_name_unique": {
+          "name": "move_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      }
     },
     "public.move_name": {
       "name": "move_name",
@@ -409,7 +423,8 @@
         "sun-moon",
         "ultra-sun-ultra-moon",
         "lets-go-pikachu-lets-go-eevee",
-        "sword-shield"
+        "sword-shield",
+        "brilliant-diamond-and-shining-pearl"
       ]
     }
   },

@@ -17,18 +17,20 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- CREATE TYPE "public"."version_groups" AS ENUM('red-blue', 'yellow', 'gold-silver', 'crystal', 'ruby-sapphire', 'emerald', 'firered-leafgreen', 'diamond-pearl', 'platinum', 'heartgold-soulsilver', 'black-white', 'colosseum', 'xd', 'black-2-white-2', 'x-y', 'omega-ruby-alpha-sapphire', 'sun-moon', 'ultra-sun-ultra-moon', 'lets-go-pikachu-lets-go-eevee', 'sword-shield');
+ CREATE TYPE "public"."version_groups" AS ENUM('red-blue', 'yellow', 'gold-silver', 'crystal', 'ruby-sapphire', 'emerald', 'firered-leafgreen', 'diamond-pearl', 'platinum', 'heartgold-soulsilver', 'black-white', 'colosseum', 'xd', 'black-2-white-2', 'x-y', 'omega-ruby-alpha-sapphire', 'sun-moon', 'ultra-sun-ultra-moon', 'lets-go-pikachu-lets-go-eevee', 'sword-shield', 'brilliant-diamond-and-shining-pearl');
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "move" (
 	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
 	"power" smallint,
 	"accuracy" smallint,
 	"pp" smallint NOT NULL,
 	"priority" smallint NOT NULL,
-	"type" "type" NOT NULL
+	"type" "type" NOT NULL,
+	CONSTRAINT "move_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "move_name" (

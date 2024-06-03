@@ -30,8 +30,8 @@ import { Static } from "elysia"
 
 export const Move = pgTable("move", {
   id: serial("id").primaryKey(),
-  power: smallint("power"),
   name: text("name").notNull().unique(),
+  power: smallint("power"),
   accuracy: smallint("accuracy"),
   pp: smallint("pp").notNull(),
   priority: smallint("priority").notNull(),
