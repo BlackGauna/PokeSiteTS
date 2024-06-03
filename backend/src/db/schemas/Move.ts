@@ -1,4 +1,4 @@
-import { pgTable, serial, smallint } from "drizzle-orm/pg-core"
+import { pgTable, serial, smallint, text } from "drizzle-orm/pg-core"
 import { NamesTable, PokemonTypes } from "./Shared"
 import { relations } from "drizzle-orm"
 import { PokemonMove } from "./Pokemon"
@@ -31,6 +31,7 @@ import { Static } from "elysia"
 export const Move = pgTable("move", {
   id: serial("id").primaryKey(),
   power: smallint("power"),
+  name: text("name").notNull().unique(),
   accuracy: smallint("accuracy"),
   pp: smallint("pp").notNull(),
   priority: smallint("priority").notNull(),

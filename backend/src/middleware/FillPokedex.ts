@@ -109,8 +109,6 @@ const getPokemonMoves = async (movesElementArray: Pokedex.MoveElement[], pokemon
   const versionGroups = ["ruby-sapphire", "emerald"] as const
   type versionGroups = (typeof versionGroups)[number]
 
-  const movesDbArray: MoveType[] = []
-
   // TODO: combine both loops for optimization
   const filteredByVersion = movesElementArray.map(moveElement => {
     moveElement.version_group_details = moveElement.version_group_details.filter(group => {
@@ -123,11 +121,24 @@ const getPokemonMoves = async (movesElementArray: Pokedex.MoveElement[], pokemon
   // await Bun.write(path, JSON.stringify(filteredByVersion))
   // return 1
 
-  for (const moveElement of filteredByVersion) {
+  prepareMove(filteredByVersion, pokemonId)
+}
+
+const prepareMove = async (filteredMoveArray: Pokedex.MoveElement[], pokemonId: number) => {
+  const movesDbArray: MoveType[] = []
+
+  for (const moveElement of filteredMoveArray) {
     const moveApi = await P.getMoveByName(moveElement.move.name)
 
-    const moveDb = await prepareMove(moveApi)
     const moveNames = await generateNamesArray(moveApi.names)
+    const moveDb = {
+      type: generateTypes(moveApi.type).type,
+      power: moveApi.power,
+      accuracy: moveApi.accuracy,
+      pp: moveApi.pp!,
+      priority: moveApi.priority,
+      name: findEnglishName(moveNames),
+    }
 
     for (const learnMethodPerVersion of moveElement.version_group_details) {
       const moveForDb: LearnedMove = {
@@ -143,17 +154,6 @@ const getPokemonMoves = async (movesElementArray: Pokedex.MoveElement[], pokemon
   }
 
   return movesDbArray
-}
-
-const prepareMove = async (moveApi: Pokedex.Move) => {
-  const moveDb: MoveType = {
-    type: generateTypes(moveApi.type).type,
-    power: moveApi.power,
-    accuracy: moveApi.accuracy,
-    pp: moveApi.pp!,
-    priority: moveApi.priority,
-  }
-  return moveDb
 }
 
 export const testGetPokemonFromApi = () => {
