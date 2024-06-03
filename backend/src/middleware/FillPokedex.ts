@@ -166,7 +166,7 @@ const prepareMove = async (filteredMoveArray: Pokedex.MoveElement[], pokemonId: 
         version: learnMethodPerVersion.version_group.name as VersionGroup,
       }
 
-      const result = insertPokemonMoveData(moveForDb)
+      const result = await insertPokemonMoveData(moveForDb)
       // testArray.push(moveForDb)
     }
 

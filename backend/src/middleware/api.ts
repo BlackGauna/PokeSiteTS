@@ -65,6 +65,13 @@ export const insertPokemonMoveData = async (learnedMove: LearnedMove) => {
           .returning({ id: Move.id })
           .onConflictDoNothing()
       )[0].id
+
+      const moveNamesWithId = learnedMove.moveNames.map(name => ({
+        ...name,
+        moveId: moveId!,
+      }))
+
+      await tx.insert(MoveName).values(moveNamesWithId).onConflictDoNothing()
     }
 
     const pokemonMove: PokemonMoveType = {
@@ -76,18 +83,6 @@ export const insertPokemonMoveData = async (learnedMove: LearnedMove) => {
     }
     await tx.insert(PokemonMove).values(pokemonMove).onConflictDoNothing()
 
-    const moveNamesWithId = learnedMove.moveNames.map(name => ({
-      ...name,
-      moveId: moveId,
-    }))
-
-    await tx.insert(MoveName).values(moveNamesWithId).onConflictDoNothing()
-
-    return await tx.query.Pokemon.findFirst({
-      where: eq(Pokemon.id, learnedMove.pokemonId),
-      with: {
-        moves: true,
-      },
-    })
+    return moveId
   })
 }
