@@ -74,6 +74,7 @@ export const VersionGroup = [
   "ultra-sun-ultra-moon",
   "lets-go-pikachu-lets-go-eevee",
   "sword-shield",
+  "brilliant-diamond-and-shining-pearl",
 ] as const
 export type VersionGroup = (typeof VersionGroup)[number]
 

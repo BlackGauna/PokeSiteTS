@@ -112,11 +112,16 @@ const getPokemonMoves = async (movesElementArray: Pokedex.MoveElement[], pokemon
   const movesDbArray: MoveType[] = []
 
   // TODO: combine both loops for optimization
-  const filteredByVersion = movesElementArray.filter(async moveElement => {
-    for (const versionDetails of moveElement.version_group_details) {
-      return versionGroups.indexOf(versionDetails.version_group.name as versionGroups) !== -1
-    }
+  const filteredByVersion = movesElementArray.map(moveElement => {
+    moveElement.version_group_details = moveElement.version_group_details.filter(group => {
+      return versionGroups.indexOf(<versionGroups>group.version_group.name) !== -1
+    })
+    return moveElement
   })
+
+  // const path = "@tests/json.json"
+  // await Bun.write(path, JSON.stringify(filteredByVersion))
+  // return 1
 
   for (const moveElement of filteredByVersion) {
     const moveApi = await P.getMoveByName(moveElement.move.name)
@@ -134,9 +139,6 @@ const getPokemonMoves = async (movesElementArray: Pokedex.MoveElement[], pokemon
         version: learnMethodPerVersion.version_group.name as VersionGroup,
       }
       const result = insertPokemonMoveData(moveForDb)
-
-      const path = "@tests/json.json"
-      await Bun.write(path, JSON.stringify(result))
     }
   }
 
@@ -155,12 +157,12 @@ const prepareMove = async (moveApi: Pokedex.Move) => {
 }
 
 export const testGetPokemonFromApi = () => {
-  preparePokemonData([
-    {
-      pokemon: RATTATA,
-      species: RATTATA_SPECIES,
-    },
-  ])
+  const testData = {
+    pokemon: RATTATA,
+    species: RATTATA_SPECIES,
+  }
+  preparePokemonData([testData])
 
+  // getPokemonMoves(RATTATA.moves, 19)
   // generateNamesArray(RATTATA_SPECIES.names)
 }
