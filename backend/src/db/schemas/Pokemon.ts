@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, smallint, text } from "drizzle-orm/pg-core"
+import { pgEnum, pgTable, primaryKey, smallint, text } from "drizzle-orm/pg-core"
 // import { createInsertSchema } from "drizzle-typebox"
 import { NamesTable, PokemonTypes, versionGroups } from "./Shared"
 import { relations } from "drizzle-orm"
@@ -24,12 +24,18 @@ export const Pokemon = pgTable("pokemon", {
   captureRate: smallint("capture_rate"),
 })
 
-export const PokemonName = pgTable("pokemon_name", {
-  ...NamesTable,
-  pokemonId: smallint("pokemon_id")
-    .references(() => Pokemon.id)
-    .notNull(),
-})
+export const PokemonName = pgTable(
+  "pokemon_name",
+  {
+    ...NamesTable,
+    pokemonId: smallint("pokemon_id")
+      .references(() => Pokemon.id)
+      .notNull(),
+  },
+  table => ({
+    pk: primaryKey({ columns: [table.pokemonId, table.language] }),
+  }),
+)
 
 export const pokemonRelations = relations(Pokemon, ({ many }) => ({
   names: many(PokemonName),
@@ -59,17 +65,23 @@ export const moveLearnMethod = pgEnum("move_learn_method", [
 
 export type LearnMethod = (typeof moveLearnMethod.enumValues)[number]
 
-export const PokemonMove = pgTable("pokemon_move", {
-  pokemonId: smallint("pokemon_id")
-    .references(() => Pokemon.id)
-    .notNull(),
-  moveId: smallint("move_id")
-    .references(() => Move.id)
-    .notNull(),
-  learnMethod: moveLearnMethod("learn_method").notNull(),
-  level: smallint("level").notNull(),
-  version: versionGroups("version").notNull(),
-})
+export const PokemonMove = pgTable(
+  "pokemon_move",
+  {
+    pokemonId: smallint("pokemon_id")
+      .references(() => Pokemon.id)
+      .notNull(),
+    moveId: smallint("move_id")
+      .references(() => Move.id)
+      .notNull(),
+    learnMethod: moveLearnMethod("learn_method").notNull(),
+    level: smallint("level").notNull(),
+    version: versionGroups("version").notNull(),
+  },
+  table => ({
+    pk: primaryKey({ columns: [table.pokemonId, table.moveId] }),
+  }),
+)
 
 export const pokemonMoveRelations = relations(PokemonMove, ({ one }) => ({
   pokemon: one(Pokemon, {

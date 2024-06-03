@@ -109,13 +109,28 @@ const getPokemonMoves = async (movesElementArray: Pokedex.MoveElement[], pokemon
   const versionGroups = ["ruby-sapphire", "emerald"] as const
   type versionGroups = (typeof versionGroups)[number]
 
+  // const filteredByVersion = movesElementArray.map(moveElement => {
+  //   moveElement.version_group_details = moveElement.version_group_details.filter(group => {
+  //     return versionGroups.indexOf(<versionGroups>group.version_group.name) !== -1
+  //   })
+
+  //   return moveElement
+  // })
+
   // TODO: combine both loops for optimization
-  const filteredByVersion = movesElementArray.map(moveElement => {
-    moveElement.version_group_details = moveElement.version_group_details.filter(group => {
-      return versionGroups.indexOf(<versionGroups>group.version_group.name) !== -1
-    })
-    return moveElement
-  })
+  const filteredByVersion = movesElementArray.reduce(
+    (accumulator: Pokedex.MoveElement[], moveElement) => {
+      moveElement.version_group_details = moveElement.version_group_details.filter(group => {
+        return versionGroups.indexOf(<versionGroups>group.version_group.name) !== -1
+      })
+
+      if (moveElement.version_group_details.length > 0) {
+        accumulator.push(moveElement)
+      }
+      return accumulator
+    },
+    [],
+  )
 
   // const path = "@tests/json.json"
   // await Bun.write(path, JSON.stringify(filteredByVersion))
@@ -127,6 +142,7 @@ const getPokemonMoves = async (movesElementArray: Pokedex.MoveElement[], pokemon
 const prepareMove = async (filteredMoveArray: Pokedex.MoveElement[], pokemonId: number) => {
   const movesDbArray: MoveType[] = []
 
+  // const testArray = []
   for (const moveElement of filteredMoveArray) {
     const moveApi = await P.getMoveByName(moveElement.move.name)
 
@@ -149,8 +165,13 @@ const prepareMove = async (filteredMoveArray: Pokedex.MoveElement[], pokemonId: 
         level: learnMethodPerVersion.level_learned_at,
         version: learnMethodPerVersion.version_group.name as VersionGroup,
       }
+
       const result = insertPokemonMoveData(moveForDb)
+      // testArray.push(moveForDb)
     }
+
+    // const path = Bun.file("@tests/json.json")
+    // await Bun.write(path, JSON.stringify(testArray))
   }
 
   return movesDbArray
@@ -161,8 +182,7 @@ export const testGetPokemonFromApi = () => {
     pokemon: RATTATA,
     species: RATTATA_SPECIES,
   }
-  preparePokemonData([testData])
+  // preparePokemonData([testData])
 
-  // getPokemonMoves(RATTATA.moves, 19)
-  // generateNamesArray(RATTATA_SPECIES.names)
+  getPokemonMoves(RATTATA.moves, 19)
 }
