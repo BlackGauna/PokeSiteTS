@@ -45,6 +45,7 @@ export const MoveName = pgTable(
   "move_name",
   {
     ...NamesTable,
+    id: serial("id").unique(),
     moveId: smallint("move_id")
       .references(() => Move.id)
       .notNull(),

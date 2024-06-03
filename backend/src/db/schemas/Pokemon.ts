@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, primaryKey, smallint, text } from "drizzle-orm/pg-core"
+import { pgEnum, pgTable, primaryKey, serial, smallint, text } from "drizzle-orm/pg-core"
 // import { createInsertSchema } from "drizzle-typebox"
 import { NamesTable, PokemonTypes, versionGroups } from "./Shared"
 import { relations } from "drizzle-orm"
@@ -28,6 +28,7 @@ export const PokemonName = pgTable(
   "pokemon_name",
   {
     ...NamesTable,
+    id: serial("id").unique(),
     pokemonId: smallint("pokemon_id")
       .references(() => Pokemon.id)
       .notNull(),

@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, serial, text } from "drizzle-orm/pg-core"
+import { pgEnum, pgTable, text } from "drizzle-orm/pg-core"
 import { createInsertSchema } from "drizzle-typebox"
 import { Static } from "elysia"
 
@@ -46,7 +46,6 @@ export const Languages = pgEnum("language", [
 export type Languages = (typeof Languages.enumValues)[number]
 
 export const NamesTable = {
-  id: serial("id").unique(),
   language: Languages("language").notNull(),
   name: text("name").notNull(),
 }

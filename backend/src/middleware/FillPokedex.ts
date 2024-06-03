@@ -182,7 +182,7 @@ export const testGetPokemonFromApi = () => {
     pokemon: RATTATA,
     species: RATTATA_SPECIES,
   }
-  // preparePokemonData([testData])
+  preparePokemonData([testData])
 
-  getPokemonMoves(RATTATA.moves, 19)
+  // getPokemonMoves(RATTATA.moves, 19)
 }
