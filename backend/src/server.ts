@@ -4,7 +4,7 @@ import setupRoutes from "./routes/setup"
 import pokedexRoutes from "./routes/pokedex"
 import Elysia from "elysia"
 import cors from "@elysiajs/cors"
-import { testGetPokemonFromApi } from "./middleware/FillPokedex"
+// import { testGetPokemonFromApi } from "./middleware/FillPokedex"
 
 const app = new Elysia()
   .use(cors())
@@ -15,7 +15,7 @@ const app = new Elysia()
 
 console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`)
 
-const test = testGetPokemonFromApi()
-console.log(test)
+// const test = testGetPokemonFromApi()
+// console.log(test)
 
 export type App = typeof app
