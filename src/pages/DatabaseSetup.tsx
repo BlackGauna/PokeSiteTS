@@ -71,7 +71,7 @@ function DatabaseSetup() {
         <>
           {log}
           <p>got data:</p>
-          {data.map(pokemon => (
+          {data.pokemonsDbArray.map(pokemon => (
             <p key={pokemon.id} className="ps-8">
               {pokemon.name}
             </p>
@@ -128,10 +128,7 @@ function DatabaseSetup() {
         <div>
           <b>Log:</b>
         </div>
-        <div
-          ref={logRef}
-          className="me-auto mr-10 h-[80vh] max-w-4xl overflow-y-auto border-2"
-        >
+        <div ref={logRef} className="me-auto mr-10 h-[80vh] max-w-4xl overflow-y-auto border-2">
           {logOutput}
         </div>
       </div>

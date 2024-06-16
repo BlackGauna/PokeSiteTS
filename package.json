@@ -12,10 +12,13 @@
   },
   "dependencies": {
     "@elysiajs/eden": "^1.0.14",
+    "@netmust/leaflet-continuouszoom": "^1.0.0",
     "@tanstack/react-query": "^5.36.0",
+    "@types/leaflet-rastercoords": "^1.0.5",
     "axios": "^1.6.8",
     "hono": "^4.4.2",
     "leaflet": "^1.9.4",
+    "leaflet-rastercoords": "^1.0.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.2.1",

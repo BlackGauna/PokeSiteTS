@@ -3,7 +3,7 @@ import { pgEnum, pgTable, primaryKey, serial, smallint, text } from "drizzle-orm
 import { NamesTable, PokemonTypes, versionGroups } from "./Shared"
 import { relations } from "drizzle-orm"
 import { Move } from "./Move"
-import { createInsertSchema } from "drizzle-typebox"
+import { createInsertSchema, createSelectSchema } from "drizzle-typebox"
 import { Static } from "elysia"
 
 // TODO: add effort value gain when defeated, eg. 1 attack ev
@@ -99,6 +99,9 @@ export const pokemonMoveRelations = relations(PokemonMove, ({ one }) => ({
 export const insertPokemon = createInsertSchema(Pokemon)
 export const insertPokemonName = createInsertSchema(PokemonName)
 export const insertPokemonMove = createInsertSchema(PokemonMove)
+
+export const selectPokemon = createSelectSchema(Pokemon)
+export type SelectPokemonType = Static<typeof selectPokemon>
 
 export type PokemonType = Static<typeof insertPokemon>
 export type PokemonNameType = Static<typeof insertPokemonName>
