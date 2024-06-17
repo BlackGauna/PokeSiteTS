@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react"
 import "leaflet-rastercoords"
 import "../util/leaflet-zoom"
 import * as overworldItems from "../assets/OverworldItems.json"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { treaty } from "@elysiajs/eden"
 import { App } from "@server/server"
 import { PokemonType } from "@server/db/schemas/Pokemon"
@@ -29,8 +29,6 @@ function MapLeaf() {
   const map = useRef<L.Map>()
   const rc = useRef<L.RasterCoords>()
 
-  // const marker = useRef<L.Marker>()
-
   const [imageWidth, imageHeight] = [13024, 6352]
 
   useEffect(() => {
@@ -46,21 +44,6 @@ function MapLeaf() {
 
     rc.current = new L.RasterCoords(map.current, [imageWidth, imageHeight])
     map.current.setView(rc.current.unproject([7900, 4500]), 5)
-
-    // set markers on click events in the map
-    // map.current.on("click", function (event) {
-    //   // any position in leaflet needs to be projected to obtain the image coordinates
-    //   const coords = rc.current!.project(event.latlng)
-
-    //   if (marker.current) {
-    //     marker.current.remove()
-    //   }
-    //   marker.current = L.marker(rc.current!.unproject([3719, 5338]))
-    //   marker
-    //     .current!.bindPopup("[" + Math.floor(coords.x) + "," + Math.floor(coords.y) + "]")
-    //     .openPopup()
-    //   marker.current!.addTo(map.current!)
-    // })
 
     map.current.on("zoomend", () => {
       console.log(
