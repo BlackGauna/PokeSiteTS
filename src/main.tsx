@@ -6,6 +6,7 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom"
 import DatabaseSetup from "./pages/DatabaseSetup.tsx"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import MapLeaf from "./pages/MapLeaf.tsx"
+import Map from "./pages/Map.tsx"
 
 const router = createBrowserRouter([
   {
@@ -15,6 +16,11 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <MapLeaf />,
+    errorElement: <div>Error, site not found!</div>,
+  },
+  {
+    path: "/2",
+    element: <Map />,
     errorElement: <div>Error, site not found!</div>,
   },
 ])
