@@ -68,7 +68,7 @@ export async function getPokemonFromApi(id: number, end?: number) {
     console.info("got all pokemon, preparing...")
     const cleanPokedex = await preparePokemonData(pokedex)
 
-    console.info("sending pokemon data to db")
+    // console.info("sending pokemon data to db")
     return cleanPokedex
   }
 }
@@ -136,7 +136,7 @@ const getPokemonMoves = async (movesElementArray: Pokedex.MoveElement[], pokemon
   // await Bun.write(path, JSON.stringify(filteredByVersion))
   // return 1
 
-  prepareMove(filteredByVersion, pokemonId)
+  await prepareMove(filteredByVersion, pokemonId)
 }
 
 const prepareMove = async (filteredMoveArray: Pokedex.MoveElement[], pokemonId: number) => {
