@@ -19,7 +19,7 @@ const fetchItemData = async (): Promise<PokemonType> => {
   if (res.error) {
     throw res.error
   }
-  return res.data
+  return res.data[0]
 }
 
 function MapLeaf() {

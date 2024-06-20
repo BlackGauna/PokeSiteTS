@@ -14,6 +14,7 @@ const app = new Elysia()
   .listen(3000)
 
 console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`)
+console.log("database:", process.env.DATABASE_URL!)
 
 // const test = testGetPokemonFromApi()
 // console.log(test)

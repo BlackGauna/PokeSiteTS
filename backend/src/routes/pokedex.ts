@@ -1,62 +1,46 @@
-import { Pokemon } from "@schemas/Pokemon"
+import { Pokemon, PokemonType, PokemonWithName } from "@schemas/Pokemon"
 import { eq } from "drizzle-orm"
 import Elysia, { t } from "elysia"
 // import { Hono } from "hono"
 import { db } from "src/db/db"
 
-const pokedexRoutes = new Elysia({ prefix: "/pokemon" })
-  .get("/", async () => {
-    const result = await db.query.Pokemon.findFirst({
-      where: eq(Pokemon.name, "Rattata"),
-      // with: { names: true },
-    })
-    return result
+const getPokemon = async () => {
+  const result = await db.query.Pokemon.findFirst({
+    where: eq(Pokemon.name, "Rattata"),
   })
-  .get(
-    "/:idOrName",
-    async ({ params: { idOrName } }): Promise<PokemonWithNames> => {
-      if (typeof idOrName === "number") {
-        const result: PokemonWithNames = await db.query.Pokemon.findFirst({
-          where: eq(Pokemon.id, idOrName),
-          with: { names: true },
-        })
-        return result
-      } else {
-        const result: PokemonWithNames = await db.query.Pokemon.findFirst({
-          where: eq(Pokemon.name, idOrName),
-          with: { names: true },
-        })
-        return result
-      }
-    },
-    {
-      params: t.Object({
-        idOrName: t.Union([t.Number(), t.String()]),
-      }),
-    },
-  )
 
-const getPokemonwithNames = async (idOrName: number | string) => {
-  if (typeof idOrName === "number") {
-    return await db.query.Pokemon.findFirst({
-      where: eq(Pokemon.id, idOrName),
-      with: { names: true },
-    })
-  } else {
-    return await db.query.Pokemon.findFirst({
-      where: eq(Pokemon.name, idOrName),
-      with: { names: true },
-    })
-  }
+  // need to wrap the result in an array and type it as an array of the type because Treaty does not send correct typing to client side otherwise.
+  return [result] as PokemonType[]
 }
 
-export type PokemonWithNames = Awaited<ReturnType<typeof getPokemonwithNames>>
-// const pokedexRoutes = new Hono().get("/", async c => {
-//   const result = await db.query.Pokemons.findFirst({
-//     with: { names: true },
-//   })
+const pokedexRoutes = new Elysia({ prefix: "/pokemon" })
+  .get("/", async () => getPokemon())
 
-//   c.json(result)
-// })
+  .get("/id/:idOrName", async ({ params: { idOrName } }) => getPokemonwithNames(idOrName), {
+    params: t.Object({
+      idOrName: t.Union([t.String()]),
+    }),
+  })
+
+const getPokemonwithNames = async (idOrName: number | string) => {
+  try {
+    if (typeof idOrName === "number") {
+      const result = await db.query.Pokemon.findFirst({
+        where: eq(Pokemon.id, idOrName),
+        with: { names: true },
+      })
+      return [result] as PokemonWithName[]
+    } else {
+      const result = await db.query.Pokemon.findFirst({
+        where: eq(Pokemon.name, idOrName),
+        with: { names: true },
+      })
+
+      return [result] as PokemonWithName[]
+    }
+  } catch (error) {
+    throw console.error(error)
+  }
+}
 
 export default pokedexRoutes

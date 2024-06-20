@@ -4,6 +4,7 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import MapHandler from "src/pages/MapHandler"
 import RasterCoordsProvider from "./RasterCoordsProvider"
+import MapHandler2 from "src/pages/MapHandler2"
 
 function MapProvider() {
   return (
