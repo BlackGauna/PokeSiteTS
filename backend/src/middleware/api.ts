@@ -1,4 +1,4 @@
-import { Move, MoveName, MoveType } from "@schemas/Move"
+import { Move, MoveName, MoveNameType, MoveType } from "@schemas/Move"
 import {
   LearnMethod,
   Pokemon,
@@ -36,53 +36,60 @@ export const insertNewPokemonData = async (
   })
 }
 
-export type LearnedMove = {
-  move: MoveType
-  moveNames: NamesTableType[]
+type LearnedMove = {
   pokemonId: number
   learnMethod: LearnMethod
   level: number
   version: VersionGroup
 }
+export type MoveForDb = {
+  move: MoveType
+  pokemonLearnData: LearnedMove[]
+  moveNames: NamesTableType[]
+}
 
-// TODO: refactor into two separate functions for Moves and PokemonMoves
-export const insertPokemonMoveData = async (learnedMove: LearnedMove) => {
-  return await db.transaction(async tx => {
-    let moveId = (
-      await tx.query.Move.findFirst({
-        where: eq(Move.name, learnedMove.move.name),
-        columns: {
-          id: true,
-        },
-      })
-    )?.id
+export const insertMovesData = async (movesForDb: MoveForDb[]) => {
+  console.log("Inserting moves to db")
 
-    if (typeof moveId !== "number") {
-      moveId = (
-        await tx
-          .insert(Move)
-          .values(learnedMove.move)
-          .returning({ id: Move.id })
-          .onConflictDoNothing()
-      )[0].id
+  for (const moveforDbElement of movesForDb) {
+    console.log(`  inserting move ${moveforDbElement.move.name}`)
 
-      const moveNamesWithId = learnedMove.moveNames.map(name => ({
-        ...name,
-        moveId: moveId!,
+    await db.transaction(async tx => {
+      let moveId: number | undefined = (
+        await tx.query.Move.findFirst({
+          where: eq(Move.name, moveforDbElement.move.name!),
+          columns: {
+            id: true,
+          },
+        })
+      )?.id
+
+      if (typeof moveId === "undefined") {
+        moveId = (
+          await tx
+            .insert(Move)
+            .values(moveforDbElement.move)
+            .onConflictDoNothing()
+            .returning({ id: Move.id })
+        )[0].id
+      }
+
+      const names: MoveNameType[] = moveforDbElement.moveNames.map(nameElement => ({
+        ...nameElement,
+        moveId: moveId,
       }))
 
-      await tx.insert(MoveName).values(moveNamesWithId).onConflictDoNothing()
-    }
+      await tx.insert(MoveName).values(names).onConflictDoNothing()
 
-    const pokemonMove: PokemonMoveType = {
-      pokemonId: learnedMove.pokemonId,
-      moveId: moveId,
-      learnMethod: learnedMove.learnMethod,
-      level: learnedMove.level,
-      version: learnedMove.version,
-    }
-    await tx.insert(PokemonMove).values(pokemonMove).onConflictDoNothing()
+      const pokemonMoveData = moveforDbElement.pokemonLearnData.map(pokemonData => {
+        const pokemonMove: PokemonMoveType = {
+          ...pokemonData,
+          moveId: moveId,
+        }
+        return pokemonMove
+      })
 
-    return moveId
-  })
+      await tx.insert(PokemonMove).values(pokemonMoveData).onConflictDoNothing()
+    })
+  }
 }

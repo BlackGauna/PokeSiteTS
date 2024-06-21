@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { AxiosError } from "axios"
 import Pokedex from "pokedex-promise-v2"
-import { LearnMethod, PokemonMoveType, PokemonNameType, PokemonType } from "@schemas/Pokemon"
+import { LearnMethod, PokemonType } from "@schemas/Pokemon"
 import {
   findEnglishName,
   generateNamesArray,
@@ -9,9 +7,9 @@ import {
   generateTypes,
 } from "src/utils/pokeApi2db"
 import { MoveType } from "@schemas/Move"
-import { LearnedMove, insertNewPokemonData, insertPokemonMoveData } from "./api"
-import { RATTATA, RATTATA_SPECIES } from "src/tests/testPokemon"
+import { MoveForDb, insertMovesData, insertNewPokemonData } from "./api"
 import { VersionGroup } from "@schemas/Shared"
+import { delay } from "src/utils/general"
 
 type PokemonApi = {
   pokemon: Pokedex.Pokemon
@@ -23,60 +21,63 @@ const P = new Pokedex({
   timeout: 1000 * 30,
 })
 
-export async function getPokemonFromApi(id: number, end?: number) {
-  if (end) {
-    const ids = [...Array(end - id + 1).keys()].map(x => x + id)
+export const preparePokemonAndMoves = async (id: number, end?: number) => {
+  const pokemonAndSpeciesData = await getPokemonFromApi(id, end)
+  await insertPokemonToDb(pokemonAndSpeciesData)
 
-    // TODO: maybe simplify by calling method with array of ids, see library info
-    const pokedex: PokemonApi[] = []
-    try {
-      for (const id of ids) {
-        // Grouping does not work currently in bun, so have add manual indentation inside group
-        console.group(`Getting pokemon with id: ${id}`)
+  // moves
+  const movesToSave = createMovesArray(pokemonAndSpeciesData)
+  // writeToTestFile({ test: movesToSave })
 
-        try {
-          console.info("  Getting pokemon info...")
-          const pokemon = await P.getPokemonByName(id)
-
-          console.info("  Getting species info...")
-          const species = await P.getPokemonSpeciesByName(pokemon.species.name)
-
-          pokedex.push({ pokemon, species })
-        } catch (error) {
-          console.error(error)
-          throw error
-        }
-
-        console.groupEnd()
-      }
-    } catch (error) {
-      console.error("An error occured while getting data from pokeapi")
-
-      if (error instanceof AxiosError) {
-        console.log(error.toJSON())
-
-        throw error.toJSON()
-      } else throw error
-    }
-
-    pokedex.sort((a, b) => {
-      return a.pokemon.id - b.pokemon.id
-    })
-
-    // return pokedex.length > 1 ? pokedex : pokedex[0]
-
-    console.info("got all pokemon, preparing...")
-    const cleanPokedex = await preparePokemonData(pokedex)
-
-    // console.info("sending pokemon data to db")
-    return cleanPokedex
-  }
+  const movestoSaveDbType = await getMovesFromApi(movesToSave)
+  await insertMovesToDb(movestoSaveDbType)
 }
 
-async function preparePokemonData(pokemonsApi: PokemonApi[]) {
-  const pokemonsDbArray: PokemonType[] = []
+// TODO: maybe insert a db query call to check if pokemon is already in db. If yes, skip that one.
+// and also maybe implement an update function for fixing borked data inside db, eg. via a "force" boolean param
+async function getPokemonFromApi(id: number, end?: number) {
+  const endValue = end ? end : id
+  const ids = [...Array(endValue - id + 1).keys()].map(x => x + id)
+  const pokedex: PokemonApi[] = []
+  try {
+    for (const id of ids) {
+      // Grouping does not work currently in bun, so have add manual indentation inside group
+      console.group(`Getting pokemon with id: ${id}`)
 
-  for (const pokemonApiElement of pokemonsApi) {
+      try {
+        console.info("  Getting pokemon info...")
+        const pokemon = await P.getPokemonByName(id)
+
+        console.info("  Getting species info...")
+        const species = await P.getPokemonSpeciesByName(pokemon.species.name)
+
+        pokedex.push({ pokemon, species })
+      } catch (error) {
+        console.error(error)
+        throw error
+      }
+
+      console.groupEnd()
+    }
+  } catch (error) {
+    console.error("An error occured while getting data from pokeapi")
+
+    console.log(error)
+
+    throw error
+  }
+
+  pokedex.sort((a, b) => {
+    return a.pokemon.id - b.pokemon.id
+  })
+  console.info("got all pokemon and species info")
+  return pokedex
+}
+
+const insertPokemonToDb = async (allPokemonData: PokemonApi[]) => {
+  const pokemonDbIds: number[] = []
+
+  for (const pokemonApiElement of allPokemonData) {
     const pokemonApiData = pokemonApiElement.pokemon
     const speciesApiData = pokemonApiElement.species
 
@@ -96,93 +97,76 @@ async function preparePokemonData(pokemonsApi: PokemonApi[]) {
       type: types.type,
       type2: types.type2,
     }
+    console.log(`saving pokemon ${pokemonDb.name} to db`)
 
-    const pokemonId = await insertNewPokemonData(pokemonDb, pokemonNamesDb)
-    console.info("  Getting moves info...")
-    await getPokemonMoves(pokemonApiData.moves, pokemonId)
+    const id = await insertNewPokemonData(pokemonDb, pokemonNamesDb)
+    pokemonDbIds.push(id)
   }
-
-  return { pokemonsDbArray }
+  return pokemonDbIds
 }
 
-const getPokemonMoves = async (movesElementArray: Pokedex.MoveElement[], pokemonId: number) => {
-  const versionGroups = ["ruby-sapphire", "emerald"] as const
-  type versionGroups = (typeof versionGroups)[number]
+// slightly modified type for initial generation with only the name of the move
+type MoveFromApi = Omit<MoveForDb, "move"> & {
+  move: Omit<Partial<MoveType>, "name"> & { name: string }
+}
 
-  // const filteredByVersion = movesElementArray.map(moveElement => {
-  //   moveElement.version_group_details = moveElement.version_group_details.filter(group => {
-  //     return versionGroups.indexOf(<versionGroups>group.version_group.name) !== -1
-  //   })
+// creates an array of all moves to get from the api and save inside the db
+const createMovesArray = (allPokemonData: PokemonApi[]) => {
+  const checkForVersions = ["emerald"] as const
+  type CheckForVersionsType = (typeof checkForVersions)[number]
 
-  //   return moveElement
-  // })
+  const movesFromApi: MoveFromApi[] = []
 
-  // TODO: combine both loops for optimization
-  const filteredByVersion = movesElementArray.reduce(
-    (accumulator: Pokedex.MoveElement[], moveElement) => {
-      moveElement.version_group_details = moveElement.version_group_details.filter(group => {
-        return versionGroups.indexOf(<versionGroups>group.version_group.name) !== -1
-      })
+  for (const pokemonApi of allPokemonData) {
+    for (const moveElement of pokemonApi.pokemon.moves) {
+      const moveAldreadyIndex = movesFromApi.findIndex(
+        element => moveElement.move.name === element.move.name,
+      )
 
-      if (moveElement.version_group_details.length > 0) {
-        accumulator.push(moveElement)
+      for (const versionDetails of moveElement.version_group_details) {
+        const isGen3 =
+          checkForVersions.indexOf(versionDetails.version_group.name as CheckForVersionsType) > -1
+
+        if (isGen3) {
+          const index =
+            moveAldreadyIndex > -1
+              ? moveAldreadyIndex
+              : movesFromApi.push({
+                  move: { name: moveElement.move.name },
+                  pokemonLearnData: [],
+                  moveNames: [],
+                }) - 1
+
+          movesFromApi[index].pokemonLearnData.push({
+            pokemonId: pokemonApi.pokemon.id,
+            learnMethod: versionDetails.move_learn_method.name as LearnMethod,
+            level: versionDetails.level_learned_at,
+            version: versionDetails.version_group.name as VersionGroup,
+          })
+        }
       }
-      return accumulator
-    },
-    [],
-  )
-
-  // const path = "@tests/json.json"
-  // await Bun.write(path, JSON.stringify(filteredByVersion))
-  // return 1
-
-  await prepareMove(filteredByVersion, pokemonId)
-}
-
-const prepareMove = async (filteredMoveArray: Pokedex.MoveElement[], pokemonId: number) => {
-  const movesDbArray: MoveType[] = []
-
-  // const testArray = []
-  for (const moveElement of filteredMoveArray) {
-    const moveApi = await P.getMoveByName(moveElement.move.name)
-
-    const moveNames = await generateNamesArray(moveApi.names)
-    const moveDb = {
-      type: generateTypes(moveApi.type).type,
-      power: moveApi.power,
-      accuracy: moveApi.accuracy,
-      pp: moveApi.pp!,
-      priority: moveApi.priority,
-      name: findEnglishName(moveNames),
     }
-
-    for (const learnMethodPerVersion of moveElement.version_group_details) {
-      const moveForDb: LearnedMove = {
-        move: moveDb,
-        moveNames: moveNames,
-        pokemonId: pokemonId,
-        learnMethod: learnMethodPerVersion.move_learn_method.name as LearnMethod,
-        level: learnMethodPerVersion.level_learned_at,
-        version: learnMethodPerVersion.version_group.name as VersionGroup,
-      }
-
-      const result = await insertPokemonMoveData(moveForDb)
-      // testArray.push(moveForDb)
-    }
-
-    // const path = Bun.file("@tests/json.json")
-    // await Bun.write(path, JSON.stringify(testArray))
   }
 
-  return movesDbArray
+  return movesFromApi
 }
 
-export const testGetPokemonFromApi = () => {
-  const testData = {
-    pokemon: RATTATA,
-    species: RATTATA_SPECIES,
+const getMovesFromApi = async (movesForDb: MoveFromApi[]) => {
+  for (const moveforDbElement of movesForDb) {
+    await delay(1500)
+    console.log(`Getting move ${moveforDbElement.move.name} from api`)
+    const moveInfo = await P.getMoveByName(moveforDbElement.move.name)
+    const mainName = (moveforDbElement.moveNames = generateNamesArray(moveInfo.names))
+
+    const move: MoveType = {
+      type: generateTypes(moveInfo.type).type,
+      name: findEnglishName(mainName),
+      pp: moveInfo.pp ? moveInfo.pp : 0,
+      priority: moveInfo.priority,
+    }
+    moveforDbElement.move = move
   }
-  preparePokemonData([testData])
-
-  // getPokemonMoves(RATTATA.moves, 19)
+  return movesForDb as MoveForDb[]
 }
+
+const insertMovesToDb = async (movesForDb: MoveForDb[]) => await insertMovesData(movesForDb)

@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Elysia from "elysia"
-import { getPokemonFromApi } from "../middleware/FillPokedex"
 import { Type as t } from "@sinclair/typebox"
 import { db } from "src/db/db"
 import { eq } from "drizzle-orm"
 import { createInsertSchema } from "drizzle-typebox"
 import { PokemonName, Pokemon } from "@schemas/Pokemon"
+import { preparePokemonAndMoves } from "src/middleware/FillPokedex"
 
 const type = createInsertSchema(Pokemon)
 export const pokemonNameSchema = createInsertSchema(PokemonName)
 
 const setupRoutes = new Elysia()
-  .get("/pokedex", () => getPokemonFromApi(1, 5))
+  .get("/pokedex", () => preparePokemonAndMoves(1, 386))
 
   .post(
     "/pokedex",
