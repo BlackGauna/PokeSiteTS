@@ -16,12 +16,12 @@ const router = createBrowserRouter([
   },
   {
     path: "/",
-    element: <MapLeaf />,
+    element: <MapProvider />,
     errorElement: <div>Error, site not found!</div>,
   },
   {
     path: "/2",
-    element: <MapProvider />,
+    element: <MapLeaf />,
     errorElement: <div>Error, site not found!</div>,
   },
 ])

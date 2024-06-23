@@ -4,7 +4,7 @@ import setupRoutes from "./routes/setup"
 import pokedexRoutes from "./routes/pokedex"
 import Elysia from "elysia"
 import cors from "@elysiajs/cors"
-import { preparePokemonAndMoves } from "./middleware/FillPokedex"
+// import { preparePokemonAndMoves } from "./middleware/FillPokedex"
 
 const app = new Elysia()
   .use(cors())
@@ -19,13 +19,13 @@ console.log("database:", process.env.DATABASE_URL!)
 // const test = testGetPokemonFromApi()
 // console.log(test)
 
-preparePokemonAndMoves(1, 386)
-  .then(() => {
-    console.log("Inserted all data to db")
-  })
-  .catch(error => {
-    console.error("An error occured during preparePokemonAndMoves")
-    throw error
-  })
+// preparePokemonAndMoves(1, 386)
+//   .then(() => {
+//     console.log("Inserted all data to db")
+//   })
+//   .catch(error => {
+//     console.error("An error occured during preparePokemonAndMoves")
+//     throw error
+//   })
 
 export type App = typeof app

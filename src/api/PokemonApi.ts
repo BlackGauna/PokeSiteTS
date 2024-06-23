@@ -1,11 +1,23 @@
 import { treaty } from "@elysiajs/eden"
 import type { App } from "../../backend/src/server"
-import { QueryFunctionContext, useQuery } from "@tanstack/react-query"
+import { QueryClient, QueryFunctionContext, useQuery } from "@tanstack/react-query"
+import { PokemonWithNamesAndMoves } from "@server/db/schemas/Pokemon"
 const client = treaty<App>(import.meta.env.VITE_SERVER_URL)
 
 const pokemonKeys = {
-  all: [{ all: true }] as const,
-  detail: (name: string) => [{ ...pokemonKeys.all[0], name }],
+  all: [{ scope: "pokemon" }] as const,
+  detail: (name: string) => [{ ...pokemonKeys.all[0], name: name }] as const,
+}
+
+const fetchAllPokemon = async () => {
+  const res = await client.api.pokemon.index.get()
+
+  if (res.error) {
+    throw res.error
+  }
+  const allPokemon = res.data[0]
+
+  return allPokemon
 }
 
 const fetchPokemon = async ({
@@ -16,23 +28,15 @@ const fetchPokemon = async ({
   if (res.error) {
     throw res.error
   }
-  const pen = res.data[0]
+  const pokemon = res.data[0]
 
-  return pen
+  return pokemon
 }
 
-export const useAllPokemon = async () => {
+export const useAllPokemon = () => {
   const query = useQuery({
-    queryKey: ["items"],
-    queryFn: async () => {
-      const res = await client.api.pokemon.index.get()
-      if (res.error) {
-        throw res.error
-      }
-      const pen = res.data
-
-      return pen
-    },
+    queryKey: pokemonKeys.all,
+    queryFn: async () => fetchAllPokemon(),
   })
 
   return query
@@ -44,4 +48,14 @@ export const usePokemon = (name: string) => {
     queryFn: fetchPokemon,
     retry: false,
   })
+}
+
+export const searchPokemonInCache = (queryClient: QueryClient, name: string) => {
+  const cachedPokemon = queryClient.getQueryData<PokemonWithNamesAndMoves[]>(pokemonKeys.all)
+  console.log("cache:", cachedPokemon)
+
+  const targetPokemon = cachedPokemon?.find(pokemon => pokemon.name === name)
+
+  console.log("targetPokemon", targetPokemon)
+  return targetPokemon
 }

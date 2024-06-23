@@ -12,7 +12,7 @@ export const useGetItemTest = async () => {
       if (res.error) {
         throw res.error
       }
-      const pen: PokemonType = res.data
+      const pen: PokemonType[] = res.data
 
       return pen
     },

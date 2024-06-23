@@ -11,7 +11,8 @@ import "leaflet-search/dist/leaflet-search.min.css"
 import * as overworldItemsFile from "../assets/OverworldItems.json"
 import itemSprite from "../assets/sprites/item.png"
 import itemStyles from "../styles/itemMarker.module.css"
-import { usePokemon } from "src/api/PokemonApi"
+import { searchPokemonInCache, useAllPokemon } from "src/api/PokemonApi"
+import { useQueryClient } from "@tanstack/react-query"
 
 const overworldItems = overworldItemsFile as GeoJSON.FeatureCollection<GeoJSON.Point>
 function MapHandler() {
@@ -20,13 +21,12 @@ function MapHandler() {
   const [isInitialized, setisInitialized] = useState(contextInitialized)
 
   const map = useMap()
+  const queryClient = useQueryClient()
 
   const items = useRef<L.LayerGroup | null>(null)
-  const { data, isPending } = usePokemon("Rattata")
 
-  if (!isPending) {
-    console.log("data", data)
-  }
+  // get pokemon data from db and fill cache
+  useAllPokemon()
 
   useEffect(() => {
     if (contextRc && contextInitialized) {
@@ -70,7 +70,7 @@ function MapHandler() {
             icon={itemIcon}
             position={coordsToLatlng(itemFeature.geometry.coordinates)}
           >
-            <Popup>{itemFeature.properties!.name}</Popup>
+            <Popup>{searchPokemonInCache(queryClient, itemFeature.properties!.name)?.type}</Popup>
           </Marker>
         )
         return marker
@@ -81,7 +81,6 @@ function MapHandler() {
 
   const coordsToLatlng = (coords: [number, number] | [number, number, number] | number[]) => {
     const projected = rc!.unproject(coords as L.PointExpression)
-    // const projected = latLng(coords)
     return projected
   }
 

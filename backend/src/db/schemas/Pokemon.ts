@@ -107,4 +107,5 @@ export type PokemonType = Static<typeof insertPokemon>
 export type PokemonNameType = Static<typeof insertPokemonName>
 export type PokemonMoveType = Static<typeof insertPokemonMove>
 
-export type PokemonWithName = PokemonType & { names: PokemonNameType[] }
+export type PokemonWithNames = PokemonType & { names: PokemonNameType[] }
+export type PokemonWithNamesAndMoves = PokemonWithNames & { moves: PokemonMoveType[] }

@@ -1,4 +1,4 @@
-import { ReactNode, createContext, forwardRef, useEffect, useMemo, useRef, useState } from "react"
+import { ReactNode, createContext, useEffect, useMemo, useRef, useState } from "react"
 import L from "leaflet"
 import { useMap } from "react-leaflet"
 
@@ -25,9 +25,11 @@ const RasterCoordsProvider = ({
   const [isInitialized, setIsInitialized] = useState(false)
   // const mapRef = useRef<L.Map | null>(null)
   const [imageWidth, imageHeight] = [13024, 6352]
-  const maxZoom = 8
 
-  const [rc, setRc] = useState<L.RasterCoords | null>(null)
+  const path = "tiles/{z}/{x}/{y}.png"
+  const maxZoom = 6
+
+  // const [rc, setRc] = useState<L.RasterCoords | null>(null)
 
   const map = useMap()
   useEffect(() => {
@@ -37,7 +39,7 @@ const RasterCoordsProvider = ({
     // console.log("test")
 
     const newRc = new L.RasterCoords(map, [imageWidth, imageHeight])
-    setRc(newRc)
+    // setRc(newRc)
     rcRef.current = newRc
     setIsInitialized(true)
 
@@ -46,13 +48,13 @@ const RasterCoordsProvider = ({
     map.setView(newRc.unproject(center as L.PointExpression), initialZoom)
     map.setMinZoom(map.getBoundsZoom(newRc.getMaxBounds()))
 
-    const tileLayer = L.tileLayer("tiles/{z}/{x}/{y}.png", {
+    const tileLayer = L.tileLayer(path, {
       noWrap: true,
       bounds: newRc.getMaxBounds(),
     }).addTo(map)
-  }, [imageWidth, imageHeight, map])
+  }, [imageWidth, imageHeight, map, center, initialZoom])
 
-  const value = useMemo(
+  const contextProviderValue = useMemo(
     () => ({
       rc: rcRef.current,
       isInitialized: isInitialized,
@@ -60,7 +62,11 @@ const RasterCoordsProvider = ({
     [isInitialized, rcRef],
   )
 
-  return <RasterCoordsContext.Provider value={value}>{children}</RasterCoordsContext.Provider>
+  return (
+    <RasterCoordsContext.Provider value={contextProviderValue}>
+      {children}
+    </RasterCoordsContext.Provider>
+  )
 }
 
 export default RasterCoordsProvider
