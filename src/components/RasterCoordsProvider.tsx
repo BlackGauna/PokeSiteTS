@@ -49,6 +49,7 @@ const RasterCoordsProvider = ({
     map.setMinZoom(map.getBoundsZoom(newRc.getMaxBounds()))
 
     const tileLayer = L.tileLayer(path, {
+      className: "z-0",
       noWrap: true,
       bounds: newRc.getMaxBounds(),
     }).addTo(map)
