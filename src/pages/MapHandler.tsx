@@ -9,6 +9,15 @@ import "leaflet-search-types"
 import "leaflet-search/dist/leaflet-search.min.css"
 import { searchPokemonInCache, useAllPokemon } from "src/api/PokemonApi"
 import { useQueryClient } from "@tanstack/react-query"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 import overworldItemsFile from "../assets/OverworldItems.json"
 import itemSprite from "../assets/sprites/item.png"
@@ -47,7 +56,7 @@ function MapHandler() {
   }, [contextRc, contextInitialized])
 
   useEffect(() => {
-    //... adding data in items layer containing item markers ...
+    //... adding search in items layer containing item markers, to make them searchable
     const searchControl = new L.Control.Search({
       layer: items.current!,
       initial: false,
@@ -117,19 +126,52 @@ function MapHandler() {
     return polygon
   }
 
-  useEffect(() => {
-    console.log("activeInfo", activeInfo)
-  }, [activeInfo])
+  const generateEncounterList = () => {
+    if (!activeInfo) return <></>
+    const locationPokemon = locationEncounters.find(element => element.name === activeInfo)!.pokemon
+
+    const encounterInfo = locationPokemon[0]
+    const pokemonInfo = searchPokemonInCache(queryClient, encounterInfo.name)
+
+    return (
+      <Table>
+        <TableCaption>Catchable pokemon at {activeInfo}</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="">Pokemon</TableHead>
+            <TableHead>Level</TableHead>
+            <TableHead>Method</TableHead>
+            <TableHead className="">Chance</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell className="font-medium">
+              {pokemonInfo?.names.find(el => el.language === "en")?.name}
+            </TableCell>
+            <TableCell>{`${encounterInfo.minLevel} - ${encounterInfo.maxLevel} `}</TableCell>
+            <TableCell>{encounterInfo.encounterMethod} </TableCell>
+            <TableCell className="">{`${encounterInfo.encounterChance}%`} </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    )
+  }
 
   return (
     <>
       <LayerGroup ref={items}>{rc && isInitialized && generateItemMarkers()}</LayerGroup>
       <FeatureGroup>{rc && isInitialized && generatePolygon()}</FeatureGroup>
-      <div className="absolute bottom-0 right-0 z-[1000] m-2 w-2/5 border-2 border-dashed border-red-600 text-black">
-        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Blanditiis similique facilis
-        cupiditate iste, officia dolorem voluptatibus? Consequatur asperiores quam itaque harum
-        repudiandae aut iusto quasi facilis accusantium quia. Natus, facilis?
-      </div>
+      {activeInfo && (
+        <div
+          ref={el => {
+            if (el) L.DomEvent.disableClickPropagation(el as HTMLElement) // stop leaflet mouse events over div element
+          }}
+          className="absolute bottom-0 right-0 z-[10000] min-h-40  w-1/3 cursor-auto border-2 border-solid border-green-500 bg-white/50 p-1 text-black  backdrop-blur-md"
+        >
+          {generateEncounterList()}
+        </div>
+      )}
     </>
   )
 }

@@ -4,7 +4,7 @@ import L from "leaflet"
 import { useEffect, useRef } from "react"
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import "leaflet-rastercoords"
-import "../util/leaflet-zoom"
+import "../utils/leaflet-zoom"
 import * as overworldItems from "../assets/OverworldItems.json"
 import { useQueryClient } from "@tanstack/react-query"
 import { treaty } from "@elysiajs/eden"
