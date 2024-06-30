@@ -52,10 +52,12 @@ export const usePokemon = (name: string) => {
 
 export const searchPokemonInCache = (queryClient: QueryClient, name: string) => {
   const cachedPokemon = queryClient.getQueryData<PokemonWithNamesAndMoves[]>(pokemonKeys.all)
-  console.log("cache:", cachedPokemon)
+  // console.log("cache:", cachedPokemon)
 
-  const targetPokemon = cachedPokemon?.find(pokemon => pokemon.name === name)
+  const targetPokemon = cachedPokemon?.find(
+    pokemon => pokemon.name.toLowerCase() === name.toLowerCase(),
+  )
 
-  console.log("targetPokemon", targetPokemon)
+  // console.log("targetPokemon", targetPokemon)
   return targetPokemon
 }

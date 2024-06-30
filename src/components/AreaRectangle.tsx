@@ -1,17 +1,21 @@
 import L from "leaflet"
 import { useEffect, useState } from "react"
-import { Rectangle } from "react-leaflet"
+import { Rectangle, useMap } from "react-leaflet"
 
 function AreaRectangle({
+  areaName,
   bounds,
   show,
   setActiveInfo,
 }: {
+  areaName: string
   bounds: L.LatLngBounds
   show: boolean
   setActiveInfo: React.Dispatch<React.SetStateAction<string | null>>
 }) {
   const [opacity, setOpacity] = useState(0)
+
+  const map = useMap()
 
   useEffect(() => {
     setOpacity(show ? 1 : 0)
@@ -19,7 +23,7 @@ function AreaRectangle({
 
   return (
     <Rectangle
-      key={"route-101" + opacity.toString()}
+      key={areaName + opacity.toString()} // add opacity, so React knows to update element after it changes
       bounds={bounds}
       color="black"
       opacity={opacity}
@@ -27,9 +31,9 @@ function AreaRectangle({
       dashArray={[4, 8]}
       eventHandlers={{
         click: e => {
-          // setOpacity(1)
           L.DomEvent.stopPropagation(e) // stops click event passing to parent map/layer
-          setActiveInfo("route-101")
+          setActiveInfo(areaName)
+          if (!show) map.fitBounds(bounds, { maxZoom: 6 })
         },
       }}
     />

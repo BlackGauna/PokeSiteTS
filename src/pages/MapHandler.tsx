@@ -1,6 +1,6 @@
 import L, { LatLng, latLngBounds } from "leaflet"
 import "leaflet/dist/leaflet.css"
-import { useContext, useEffect, useRef, useState } from "react"
+import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { FeatureGroup, LayerGroup, Marker, Popup, useMap, useMapEvent } from "react-leaflet"
 import * as GeoJSON from "geojson"
 import { RasterCoordsContext } from "src/components/RasterCoordsProvider"
@@ -23,10 +23,11 @@ import overworldItemsFile from "../assets/OverworldItems.json"
 import itemSprite from "../assets/sprites/item.png"
 import itemStyles from "../styles/itemMarker.module.css"
 import locationEncounters from "../assets/LocationEncounters.json"
+import areaEncounters from "../assets/areaTest.ts"
 import AreaRectangle from "src/components/AreaRectangle"
 
 const overworldItems = overworldItemsFile as GeoJSON.FeatureCollection<GeoJSON.Point>
-console.log("overworldItems", overworldItems)
+// console.log("overworldItems", overworldItems)
 
 function MapHandler() {
   const { rc: contextRc, isInitialized: contextInitialized } = useContext(RasterCoordsContext)
@@ -99,7 +100,7 @@ function MapHandler() {
     return group
   }
 
-  const projectAreaCoords = (coords: number[][]) => {
+  const projectAreaCoords = (coords: number[][] | [number[], number[]]) => {
     const projected = latLngBounds([
       rc!.unproject(coords[0] as L.PointExpression),
       rc!.unproject(coords[1] as L.PointExpression),
@@ -113,25 +114,111 @@ function MapHandler() {
   }
 
   const generatePolygon = () => {
-    console.log("locationEncounters", locationEncounters)
-    const locationName = locationEncounters[0].name
-    const bounds = projectAreaCoords(locationEncounters[0].area)
-    const polygon = (
-      <AreaRectangle
-        bounds={bounds}
-        show={activeInfo === locationName}
-        setActiveInfo={setActiveInfo}
-      />
-    )
-    return polygon
+    // console.log("locationEncounters", locationEncounters)
+    // const locationName = locationEncounters[0].name
+    // const bounds = projectAreaCoords(locationEncounters[0].area)
+
+    const polygons = []
+    for (const [areaName, areaDetails] of Object.entries(areaEncounters)) {
+      if (areaDetails.area[0].length === 0) continue
+      polygons.push(
+        <AreaRectangle
+          key={areaName}
+          areaName={areaName}
+          bounds={projectAreaCoords(areaDetails.area as number[][])}
+          show={activeInfo === areaName}
+          setActiveInfo={setActiveInfo}
+        />,
+      )
+    }
+    return polygons
   }
 
-  const generateEncounterList = () => {
-    if (!activeInfo) return <></>
-    const locationPokemon = locationEncounters.find(element => element.name === activeInfo)!.pokemon
+  const cachedEncounters = useCallback(() => generateEncounterList(), [activeInfo])
 
-    const encounterInfo = locationPokemon[0]
-    const pokemonInfo = searchPokemonInCache(queryClient, encounterInfo.name)
+  const methodSort = [
+    "walk",
+    "old-rod",
+    "good-rod",
+    "super-rod",
+    "surf",
+    "rock-smash",
+    "headbutt",
+    "dark-grass",
+    "grass-spots",
+    "cave-spots",
+    "bridge-spots",
+    "super-rod-spots",
+    "surf-spots",
+    "yellow-flowers",
+    "purple-flowers",
+    "red-flowers",
+    "rough-terrain",
+    "gift",
+    "gift-egg",
+    "only-one",
+  ]
+  const methodIndex: { [key: string]: number } = {}
+  methodSort.forEach((method, index) => {
+    methodIndex[method] = index
+  })
+
+  const generateEncounterList = () => {
+    const empty = <></>
+    if (!activeInfo) return empty
+    // const locationPokemon = locationEncounters.find(element => element.name === activeInfo)!.pokemon
+
+    // const encounterInfo = locationPokemon[0]
+
+    if (!areaEncounters[activeInfo]) return empty
+
+    const encounters = areaEncounters[activeInfo].encounters
+
+    const tableInfos = []
+
+    for (const [pokemonName, encounterDetails] of Object.entries(encounters)) {
+      const pokemonInfo = searchPokemonInCache(queryClient, pokemonName)
+
+      let sumOfChance = 0
+      let minLevel = 100
+      let maxLevel = 0
+
+      type FilteredEncounters = {
+        [key: string]: { chance: number; maxLevel: number; minLevel: number }
+      }
+
+      const filteredEncounters: FilteredEncounters = {}
+      const length = encounterDetails.length
+      for (const [index, encounter] of encounterDetails.entries()) {
+        if (index === 0 || (index > 0 && encounter.method !== encounterDetails[index - 1].method)) {
+          sumOfChance = 0
+          minLevel = 100
+          maxLevel = 0
+        }
+
+        sumOfChance += encounter.chance
+        minLevel = encounter.min_level < minLevel ? encounter.min_level : minLevel
+        maxLevel = encounter.max_level > maxLevel ? encounter.max_level : maxLevel
+        filteredEncounters[encounter.method] = {
+          chance: sumOfChance,
+          maxLevel: maxLevel,
+          minLevel: minLevel,
+        }
+      }
+
+      // TODO: maybe can remove this additional loop, incorporate above
+      for (const [method, filtered] of Object.entries(filteredEncounters)) {
+        tableInfos.push({
+          pokemon: pokemonInfo,
+          chance: filtered.chance,
+          minLevel: filtered.minLevel,
+          maxLevel: filtered.maxLevel,
+          method: method,
+        })
+      }
+      tableInfos.sort((a, b) => methodIndex[a.method] - methodIndex[b.method])
+      console.log("tableInfos", tableInfos)
+    }
 
     return (
       <Table>
@@ -144,15 +231,24 @@ function MapHandler() {
             <TableHead className="">Chance</TableHead>
           </TableRow>
         </TableHeader>
+        {/* <TableBody>{tableRows}</TableBody> */}
         <TableBody>
-          <TableRow>
-            <TableCell className="font-medium">
-              {pokemonInfo?.names.find(el => el.language === "en")?.name}
-            </TableCell>
-            <TableCell>{`${encounterInfo.minLevel} - ${encounterInfo.maxLevel} `}</TableCell>
-            <TableCell>{encounterInfo.encounterMethod} </TableCell>
-            <TableCell className="">{`${encounterInfo.encounterChance}%`} </TableCell>
-          </TableRow>
+          {tableInfos.map(element => (
+            <TableRow key={element.pokemon?.name + element.method}>
+              <TableCell className="flex items-center">
+                <img
+                  className="-m-3 w-10"
+                  src={`src/assets/sprites/pokemon/${element.pokemon?.id}.gif`}
+                />
+                <span className="ml-4">
+                  {element.pokemon?.names.find(el => el.language === "en")?.name}
+                </span>
+              </TableCell>
+              <TableCell>{`${element.minLevel} - ${element.maxLevel} `}</TableCell>
+              <TableCell>{element.method} </TableCell>
+              <TableCell className="">{`${element.chance}%`} </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     )
@@ -169,7 +265,7 @@ function MapHandler() {
           }}
           className="absolute bottom-0 right-0 z-[10000] min-h-40  w-1/3 cursor-auto border-2 border-solid border-green-500 bg-white/50 p-1 text-black  backdrop-blur-md"
         >
-          {generateEncounterList()}
+          {cachedEncounters()}
         </div>
       )}
     </>

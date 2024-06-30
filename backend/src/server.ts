@@ -4,6 +4,7 @@ import setupRoutes from "./routes/setup"
 import pokedexRoutes from "./routes/pokedex"
 import Elysia from "elysia"
 import cors from "@elysiajs/cors"
+import { getOverworldLocations, test } from "./middleware/LocationHelper"
 // import { preparePokemonAndMoves } from "./middleware/FillPokedex"
 
 const app = new Elysia()
@@ -27,5 +28,7 @@ console.log("database:", process.env.DATABASE_URL!)
 //     console.error("An error occured during preparePokemonAndMoves")
 //     throw error
 //   })
+
+// getOverworldLocations("hoenn")
 
 export type App = typeof app
