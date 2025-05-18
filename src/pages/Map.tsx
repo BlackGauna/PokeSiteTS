@@ -3,7 +3,7 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { useEffect, useRef, useState } from "react"
 import { MapContainer } from "react-leaflet"
-import RasterCoordsProvider, { RasterCoordsHandle } from "src/components/RasterCoordsProvider"
+import RasterCoordsProvider, { type RasterCoordsHandle } from "../components/RasterCoordsProvider"
 
 function Map() {
   const rcRef = useRef<RasterCoordsHandle | null>(null)
@@ -22,7 +22,7 @@ function Map() {
   return (
     <>
       <MapContainer center={[0, 0]} className="h-screen w-screen" crs={L.CRS.Simple}>
-        <RasterCoordsProvider ref={setRc} />
+        <RasterCoordsProvider center={[0, 0]} initialZoom={0} />
       </MapContainer>
     </>
   )

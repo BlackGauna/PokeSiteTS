@@ -1,14 +1,13 @@
 // import { Hono } from "hono"
 
-import setupRoutes from "./routes/setup"
-import pokedexRoutes from "./routes/pokedex"
-import Elysia from "elysia"
 import cors from "@elysiajs/cors"
-import { getOverworldLocations, test } from "./middleware/LocationHelper"
+import Elysia from "elysia"
+import pokedexRoutes from "./routes/pokedex"
+import setupRoutes from "./routes/setup"
 // import { preparePokemonAndMoves } from "./middleware/FillPokedex"
 
 const app = new Elysia()
-  .use(cors())
+  .use(cors({ origin: "*" }))
   .get("/", () => "Hi")
   .group("/api", app => app.use(pokedexRoutes))
   .group("/admin/setup", app => app.use(setupRoutes))

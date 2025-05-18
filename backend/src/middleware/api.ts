@@ -1,20 +1,13 @@
-import { Move, MoveName, MoveNameType, MoveType } from "@schemas/Move"
-import {
-  LearnMethod,
-  Pokemon,
-  PokemonMove,
-  PokemonMoveType,
-  PokemonName,
-  PokemonType,
-} from "@schemas/Pokemon"
-import { NamesTableType, VersionGroup } from "@schemas/Shared"
-import { eq } from "drizzle-orm"
+import { type MoveNameType, type MoveType, Move, MoveName } from "@/db/schemas/Move"
+import { type PokemonType, Pokemon, PokemonName } from "@/db/schemas/Pokemon"
+import { type LearnMethod, type PokemonMoveType, PokemonMove } from "@/db/schemas/PokemonMove"
+import type { NamesBaseTableType, VersionGroup } from "@/db/schemas/Shared"
 import { db } from "src/db/db"
 
 // TODO: add try catch blocks for queries
 export const insertNewPokemonData = async (
   pokemon: PokemonType,
-  pokemonNames: NamesTableType[],
+  pokemonNames: NamesBaseTableType[],
 ) => {
   return await db.transaction(async tx => {
     const pokemonId = (
@@ -23,7 +16,9 @@ export const insertNewPokemonData = async (
         .values(pokemon)
         .onConflictDoUpdate({ target: Pokemon.id, set: { ...pokemon } })
         .returning({ id: Pokemon.id })
-    )[0].id
+    )[0]?.id
+
+    if (!pokemonId) throw new Error("Pokemon id is undefined")
 
     const pokemonNamesWithId = pokemonNames.map(name => ({
       ...name,
@@ -45,34 +40,27 @@ type LearnedMove = {
 export type MoveForDb = {
   move: MoveType
   pokemonLearnData: LearnedMove[]
-  moveNames: NamesTableType[]
+  moveNames: NamesBaseTableType[]
 }
 
 export const insertMovesData = async (movesForDb: MoveForDb[]) => {
-  console.log("Inserting moves to db")
+  await db.transaction(async tx => {
+    for (const moveforDbElement of movesForDb) {
+      // console.log(`  inserting move ${moveforDbElement.move.name}`)
 
-  for (const moveforDbElement of movesForDb) {
-    console.log(`  inserting move ${moveforDbElement.move.name}`)
+      const moveId = (
+        await tx
+          .insert(Move)
+          .values(moveforDbElement.move)
+          .onConflictDoUpdate({
+            target: Move.name,
+            set: { ...moveforDbElement.move },
+          })
+          .returning({ id: Move.id })
+      )[0]?.id
 
-    await db.transaction(async tx => {
-      let moveId: number | undefined = (
-        await tx.query.Move.findFirst({
-          where: eq(Move.name, moveforDbElement.move.name!),
-          columns: {
-            id: true,
-          },
-        })
-      )?.id
-
-      if (typeof moveId === "undefined") {
-        moveId = (
-          await tx
-            .insert(Move)
-            .values(moveforDbElement.move)
-            .onConflictDoNothing()
-            .returning({ id: Move.id })
-        )[0].id
-      }
+      // TODO: error handling
+      if (!moveId) continue
 
       const names: MoveNameType[] = moveforDbElement.moveNames.map(nameElement => ({
         ...nameElement,
@@ -90,6 +78,6 @@ export const insertMovesData = async (movesForDb: MoveForDb[]) => {
       })
 
       await tx.insert(PokemonMove).values(pokemonMoveData).onConflictDoNothing()
-    })
-  }
+    }
+  })
 }

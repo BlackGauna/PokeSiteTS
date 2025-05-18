@@ -25,7 +25,7 @@ function AreaRectangle({
     <Rectangle
       key={areaName + opacity.toString()} // add opacity, so React knows to update element after it changes
       bounds={bounds}
-      color="black"
+      color="white"
       opacity={opacity}
       fillOpacity={0}
       dashArray={[4, 8]}
@@ -33,7 +33,7 @@ function AreaRectangle({
         click: e => {
           L.DomEvent.stopPropagation(e) // stops click event passing to parent map/layer
           setActiveInfo(areaName)
-          if (!show) map.fitBounds(bounds, { maxZoom: 6 })
+          // if (!show) map.fitBounds(bounds, { maxZoom: 6 })
         },
       }}
     />

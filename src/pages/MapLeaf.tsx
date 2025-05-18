@@ -1,21 +1,21 @@
 // type Props = {}
-import "leaflet/dist/leaflet.css"
 import L from "leaflet"
+import "leaflet/dist/leaflet.css"
 import { useEffect, useRef } from "react"
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-import "leaflet-rastercoords"
-import "../utils/leaflet-zoom"
-import * as overworldItems from "../assets/OverworldItems.json"
-import { useQueryClient } from "@tanstack/react-query"
 import { treaty } from "@elysiajs/eden"
-import { App } from "@server/server"
-import { PokemonType } from "@server/db/schemas/Pokemon"
+import { useQueryClient } from "@tanstack/react-query"
+import "leaflet-rastercoords"
+import type { PokemonType } from "../../backend/src/db/schemas/Pokemon"
+import type { App } from "../../backend/src/server"
+import * as overworldItems from "../assets/OverworldItems.json"
+import "../utils/leaflet-zoom"
 
 const client = treaty<App>(import.meta.env.VITE_SERVER_URL)
 
 // Custom hook for fetching data
 const fetchItemData = async (): Promise<PokemonType> => {
-  const res = await client.api.pokemon.index.get()
+  const res = await client.api.pokemon.get()
   if (res.error) {
     throw res.error
   }

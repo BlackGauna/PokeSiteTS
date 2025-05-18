@@ -1,6 +1,6 @@
-import { Pokemon, PokemonWithNamesAndMoves } from "@schemas/Pokemon"
-import { eq } from "drizzle-orm"
-import Elysia, { t } from "elysia"
+import { Pokemon, type PokemonWithNamesAndMoves } from "@schemas/Pokemon"
+import { eq, ilike } from "drizzle-orm"
+import Elysia, { status, t } from "elysia"
 // import { Hono } from "hono"
 import { db } from "src/db/db"
 
@@ -10,7 +10,7 @@ const getAllPokemon = async () => {
   })
 
   // need to wrap the result in an array and type it as an array of the type because Treaty does not send correct typing to client side otherwise.
-  return [result] as PokemonWithNamesAndMoves[][]
+  return result as unknown as PokemonWithNamesAndMoves[]
 }
 
 const pokedexRoutes = new Elysia({ prefix: "/pokemon" })
@@ -29,14 +29,23 @@ const getPokemonwithNames = async (idOrName: number | string) => {
         where: eq(Pokemon.id, idOrName),
         with: { names: true, moves: true },
       })
-      return [result] as PokemonWithNamesAndMoves[]
+
+      if (!result) {
+        return status(404, "Pokemon not found")
+      }
+
+      return [result] as unknown as PokemonWithNamesAndMoves[]
     } else {
       const result = await db.query.Pokemon.findFirst({
-        where: eq(Pokemon.name, idOrName),
+        where: ilike(Pokemon.name, idOrName),
         with: { names: true, moves: true },
       })
 
-      return [result] as PokemonWithNamesAndMoves[]
+      if (!result) {
+        return status(404, "Pokemon not found")
+      }
+
+      return [result] as unknown as PokemonWithNamesAndMoves[]
     }
   } catch (error) {
     throw console.error(error)

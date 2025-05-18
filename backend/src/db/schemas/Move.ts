@@ -1,9 +1,7 @@
-import { pgTable, primaryKey, serial, smallint, text } from "drizzle-orm/pg-core"
-import { NamesTable, PokemonTypes } from "./Shared"
 import { relations } from "drizzle-orm"
-import { PokemonMove } from "./Pokemon"
-import { createInsertSchema } from "drizzle-typebox"
-import { Static } from "elysia"
+import { pgTable, primaryKey, serial, smallint, text } from "drizzle-orm/pg-core"
+import { PokemonMove } from "./PokemonMove"
+import { NamesTableBase, PokemonTypes } from "./Shared"
 
 // export const Ailment = pgEnum("Ailment", [
 //   "unknown",
@@ -44,7 +42,7 @@ export const Move = pgTable("move", {
 export const MoveName = pgTable(
   "move_name",
   {
-    ...NamesTable,
+    ...NamesTableBase,
     id: serial("id").unique(),
     moveId: smallint("move_id")
       .references(() => Move.id)
@@ -67,7 +65,5 @@ export const MoveNameRelations = relations(MoveName, ({ one }) => ({
   }),
 }))
 
-const insertMove = createInsertSchema(Move)
-export type MoveType = Static<typeof insertMove>
-const insertMoveName = createInsertSchema(MoveName)
-export type MoveNameType = Static<typeof insertMoveName>
+export type MoveType = typeof Move.$inferInsert
+export type MoveNameType = typeof MoveName.$inferInsert

@@ -1,7 +1,8 @@
 import { treaty } from "@elysiajs/eden"
+import { QueryClient, type QueryFunctionContext, useQuery } from "@tanstack/react-query"
+import type { PokemonWithNamesAndMoves } from "../../backend/src/db/schemas/Pokemon"
 import type { App } from "../../backend/src/server"
-import { QueryClient, QueryFunctionContext, useQuery } from "@tanstack/react-query"
-import { PokemonWithNamesAndMoves } from "@server/db/schemas/Pokemon"
+
 const client = treaty<App>(import.meta.env.VITE_SERVER_URL)
 
 const pokemonKeys = {
@@ -10,12 +11,13 @@ const pokemonKeys = {
 }
 
 const fetchAllPokemon = async () => {
-  const res = await client.api.pokemon.index.get()
+  const res = await client.api.pokemon.get()
+  console.log("res", res.data)
 
   if (res.error) {
     throw res.error
   }
-  const allPokemon = res.data[0]
+  const allPokemon = res.data as PokemonWithNamesAndMoves[]
 
   return allPokemon
 }
@@ -52,7 +54,17 @@ export const usePokemon = (name: string) => {
 
 export const searchPokemonInCache = (queryClient: QueryClient, name: string) => {
   const cachedPokemon = queryClient.getQueryData<PokemonWithNamesAndMoves[]>(pokemonKeys.all)
-  // console.log("cache:", cachedPokemon)
+  console.log("cache:", cachedPokemon)
+
+  if (!cachedPokemon) {
+    return undefined
+  }
+
+  cachedPokemon.map(pokemon => {
+    if (pokemon.name === undefined) {
+      console.log("pokemon without name", pokemon)
+    }
+  })
 
   const targetPokemon = cachedPokemon?.find(
     pokemon => pokemon.name.toLowerCase() === name.toLowerCase(),

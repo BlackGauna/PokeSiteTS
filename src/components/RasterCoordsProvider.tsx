@@ -1,5 +1,5 @@
-import { ReactNode, createContext, useEffect, useMemo, useRef, useState } from "react"
 import L from "leaflet"
+import { type ReactNode, createContext, useEffect, useMemo, useRef, useState } from "react"
 import { useMap } from "react-leaflet"
 
 export const RasterCoordsContext = createContext<RasterCoordsHandle>({
@@ -19,14 +19,14 @@ const RasterCoordsProvider = ({
 }: {
   center: number[]
   initialZoom: number
-  children: ReactNode
+  children?: ReactNode
 }) => {
   const rcRef = useRef<L.RasterCoords | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   // const mapRef = useRef<L.Map | null>(null)
   const [imageWidth, imageHeight] = [13024, 6352]
 
-  const path = "tiles/{z}/{x}/{y}.png"
+  const path = "tiles/{z}/{x}/{y}.webp"
   const maxZoom = 6
 
   // const [rc, setRc] = useState<L.RasterCoords | null>(null)
