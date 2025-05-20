@@ -1,6 +1,7 @@
+import type { LearnMethod } from "@/db/enums/MoveLearnMethod"
 import { type MoveNameType, type MoveType, Move, MoveName } from "@/db/schemas/Move"
 import { type PokemonType, Pokemon, PokemonName } from "@/db/schemas/Pokemon"
-import { type LearnMethod, type PokemonMoveType, PokemonMove } from "@/db/schemas/PokemonMove"
+import { type PokemonMoveType, PokemonMove } from "@/db/schemas/PokemonMove"
 import type { NamesBaseTableType, VersionGroup } from "@/db/schemas/Shared"
 import { db } from "src/db/db"
 

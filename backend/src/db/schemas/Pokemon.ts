@@ -2,8 +2,10 @@ import { pgTable, primaryKey, smallint, text } from "drizzle-orm/pg-core"
 // import { createInsertSchema } from "drizzle-typebox"
 import { relations } from "drizzle-orm"
 import { createInsertSchema, createSelectSchema } from "drizzle-typebox"
+import { locationEncounterTable } from "./Location"
 import { PokemonMove, type PokemonMoveType } from "./PokemonMove"
 import { NamesTableBase, PokemonTypes } from "./Shared"
+
 // TODO: add effort value gain when defeated, eg. 1 attack ev
 export const Pokemon = pgTable("pokemons", {
   id: smallint().primaryKey(),
@@ -35,6 +37,7 @@ export const PokemonName = pgTable(
 export const pokemonRelations = relations(Pokemon, ({ many }) => ({
   names: many(PokemonName),
   moves: many(PokemonMove),
+  encounters: many(locationEncounterTable),
 }))
 
 export const pokemonNameRelations = relations(PokemonName, ({ one }) => ({

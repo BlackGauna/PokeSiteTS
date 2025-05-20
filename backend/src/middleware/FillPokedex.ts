@@ -1,4 +1,4 @@
-import type { LearnMethod } from "@/db/schemas/PokemonMove"
+import type { LearnMethod } from "@/db/enums/MoveLearnMethod"
 import type { MoveType } from "@schemas/Move"
 import type { PokemonType } from "@schemas/Pokemon"
 import { VersionGroup } from "@schemas/Shared"
@@ -127,6 +127,10 @@ const insertPokemonToDb = async (allPokemonData: PokemonApi[]) => {
       spDef: stats.spDef,
       speed: stats.speed,
       types: types,
+      baseExp: pokemonApiData.base_experience,
+      height: pokemonApiData.height,
+      weight: pokemonApiData.weight,
+      captureRate: null,
     }
     console.log(`saving pokemon ${pokemonDb.name} to db`)
 

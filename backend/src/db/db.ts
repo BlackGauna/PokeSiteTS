@@ -1,3 +1,4 @@
+import * as locationSchemas from "@schemas/Location"
 import * as moveSchemas from "@schemas/Move"
 import * as pokemonSchemas from "@schemas/Pokemon"
 import * as pokemonMoveSchemas from "@schemas/PokemonMove"
@@ -8,6 +9,14 @@ import postgres from "postgres"
 const client = postgres(process.env.DATABASE_URL!)
 
 export const db = drizzle(client, {
-  schema: { ...pokemonSchemas, ...sharedSchemas, ...moveSchemas, ...pokemonMoveSchemas },
+  schema: {
+    ...pokemonSchemas,
+    ...sharedSchemas,
+    ...moveSchemas,
+    ...pokemonMoveSchemas,
+    ...locationSchemas,
+  },
   logger: false,
 })
+
+export type Transaction = Parameters<Parameters<(typeof db)["transaction"]>[0]>[0]

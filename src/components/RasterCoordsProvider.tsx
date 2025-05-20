@@ -26,7 +26,7 @@ const RasterCoordsProvider = ({
   // const mapRef = useRef<L.Map | null>(null)
   const [imageWidth, imageHeight] = [13024, 6352]
 
-  const path = "tiles/{z}/{x}/{y}.webp"
+  const path = "tiles/{z}/{x}/{y}.png"
   const maxZoom = 6
 
   // const [rc, setRc] = useState<L.RasterCoords | null>(null)
@@ -43,15 +43,21 @@ const RasterCoordsProvider = ({
     rcRef.current = newRc
     setIsInitialized(true)
 
-    map.setMaxZoom(maxZoom)
     map.setMaxBounds(newRc.getMaxBounds())
     map.setView(newRc.unproject(center as L.PointExpression), initialZoom)
     map.setMinZoom(map.getBoundsZoom(newRc.getMaxBounds()))
 
-    const tileLayer = L.tileLayer(path, {
+    L.tileLayer(path, {
       className: "z-0",
       noWrap: true,
       bounds: newRc.getMaxBounds(),
+      keepBuffer: 16,
+      updateWhenZooming: false,
+      updateWhenIdle: false,
+      updateInterval: 100,
+      tileSize: 256,
+      maxNativeZoom: maxZoom,
+      maxZoom: 8,
     }).addTo(map)
   }, [imageWidth, imageHeight, map, center, initialZoom])
 

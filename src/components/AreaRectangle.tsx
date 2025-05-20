@@ -1,21 +1,22 @@
 import L from "leaflet"
-import { useEffect, useState } from "react"
-import { Rectangle, useMap } from "react-leaflet"
+import { forwardRef, useEffect, useState } from "react"
+import { Rectangle } from "react-leaflet"
 
-function AreaRectangle({
-  areaName,
-  bounds,
-  show,
-  setActiveInfo,
-}: {
-  areaName: string
-  bounds: L.LatLngBounds
-  show: boolean
-  setActiveInfo: React.Dispatch<React.SetStateAction<string | null>>
-}) {
+const AreaRectangle = forwardRef(function AreaRectangle(
+  {
+    areaName,
+    bounds,
+    show,
+    setActiveInfo,
+  }: {
+    areaName: string
+    bounds: L.LatLngBounds
+    show: boolean
+    setActiveInfo: React.Dispatch<React.SetStateAction<string | null>>
+  },
+  ref: React.Ref<L.Rectangle>,
+) {
   const [opacity, setOpacity] = useState(0)
-
-  const map = useMap()
 
   useEffect(() => {
     setOpacity(show ? 1 : 0)
@@ -29,6 +30,7 @@ function AreaRectangle({
       opacity={opacity}
       fillOpacity={0}
       dashArray={[4, 8]}
+      ref={ref}
       eventHandlers={{
         click: e => {
           L.DomEvent.stopPropagation(e) // stops click event passing to parent map/layer
@@ -38,6 +40,6 @@ function AreaRectangle({
       }}
     />
   )
-}
+})
 
 export default AreaRectangle

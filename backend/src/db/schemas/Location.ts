@@ -1,50 +1,58 @@
 import { relations } from "drizzle-orm"
-import { integer, pgEnum, pgTable, serial, smallint, text } from "drizzle-orm/pg-core"
-import { Pokemon } from "./Pokemon"
+import { index, integer, pgTable, serial, smallint, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { pokemonEncounterMethod } from "../enums/EncounterMethod"
+import { regionsEnum } from "../enums/Region"
+import { Pokemon, type PokemonType } from "./Pokemon"
 
-export const Location = pgTable("location", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-})
+export const locationTable = pgTable(
+  "location",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull().unique(),
+    region: regionsEnum().notNull(),
+    boundsSw: integer().array(2).notNull(),
+    boundsNe: integer().array(2).notNull(),
+  },
+  table => [uniqueIndex().on(table.name, table.region)],
+)
 
-export const PokemonEncounterMethod = pgEnum("pokemon_encounter_method", [
-  "walk",
-  "old-rod",
-  "good-rod",
-  "super-rod",
-  "surf",
-  "rock-smash",
-  "headbutt",
-  "dark-grass",
-  "grass-spots",
-  "cave-spots",
-  "bridge-spots",
-  "super-rod-spots",
-  "surf-spots",
-  "yellow-flowers",
-  "purple-flowers",
-  "red-flowers",
-  "rough-terrain",
-  "gift",
-  "gift-egg",
-  "only-one",
-])
+export const locationEncounterTable = pgTable(
+  "location_encounters",
+  {
+    locationId: integer("location_id")
+      .notNull()
+      .references(() => locationTable.id),
 
-export const LocationPokemon = pgTable("location_pokemon", {
-  locationId: integer("location_id")
-    .notNull()
-    .references(() => Location.id),
+    pokemonId: smallint("pokemon_id")
+      .references(() => Pokemon.id)
+      .notNull(),
 
-  pokemonId: smallint("pokemon_id")
-    .references(() => Pokemon.id)
-    .notNull(),
+    encounterChance: smallint("encounter_chance").notNull(),
+    encounterMethod: pokemonEncounterMethod("encounter_method"),
+    minLevel: smallint("min_level").notNull(),
+    maxLevel: smallint("max_level").notNull(),
+  },
+  table => [index().on(table.locationId, table.pokemonId)],
+)
 
-  encounterChance: smallint("encounter_chance").notNull(),
-  encounterMethod: PokemonEncounterMethod("encounter_method"),
-  minLevel: smallint("min_level").notNull(),
-  maxLevel: smallint("max_level").notNull(),
-})
-
-export const locationRelations = relations(Location, ({ many }) => ({
-  pokemon: many(Pokemon),
+export const locationRelations = relations(locationTable, ({ many }) => ({
+  encounters: many(locationEncounterTable),
 }))
+
+export const locationPokemonRelations = relations(locationEncounterTable, ({ one }) => ({
+  location: one(locationTable, {
+    fields: [locationEncounterTable.locationId],
+    references: [locationTable.id],
+  }),
+  pokemon: one(Pokemon, {
+    fields: [locationEncounterTable.pokemonId],
+    references: [Pokemon.id],
+  }),
+}))
+
+export type LocationInsert = typeof locationTable.$inferInsert
+export type Location = typeof locationTable.$inferSelect
+export type LocationWithEncounters = Location & { encounters: LocationEncounterWithPokemon[] }
+export type LocationEncounterInsert = typeof locationEncounterTable.$inferInsert
+export type LocationEncounter = typeof locationEncounterTable.$inferSelect
+export type LocationEncounterWithPokemon = LocationEncounter & { pokemon: PokemonType }

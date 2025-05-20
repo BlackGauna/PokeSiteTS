@@ -2,15 +2,16 @@
 
 import cors from "@elysiajs/cors"
 import Elysia from "elysia"
+import { HttpStatusCode } from "elysia-http-status-code"
+import { locationRoutes } from "./routes/location.routes"
 import pokedexRoutes from "./routes/pokedex"
-import setupRoutes from "./routes/setup"
-// import { preparePokemonAndMoves } from "./middleware/FillPokedex"
 
 const app = new Elysia()
   .use(cors({ origin: "*" }))
+  .use(HttpStatusCode())
   .get("/", () => "Hi")
   .group("/api", app => app.use(pokedexRoutes))
-  .group("/admin/setup", app => app.use(setupRoutes))
+  .group("/api", app => app.use(locationRoutes))
   .listen(3000)
 
 console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`)
@@ -28,6 +29,8 @@ console.log("database:", process.env.DATABASE_URL!)
 //     throw error
 //   })
 
-// getOverworldLocations("hoenn")
+// await getAndSaveLocations()
+// const test = await getRegionLocations("hoenn-route-101-area")
+// console.log(test)
 
 export type App = typeof app

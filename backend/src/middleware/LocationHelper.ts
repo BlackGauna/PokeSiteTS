@@ -1,151 +1,117 @@
+import { insertLocationWithEncounters } from "@/db/api/location.queries"
+import { getPokemonIdByName } from "@/db/api/pokemon.queries"
+import { parseEncounterMethod } from "@/db/enums/EncounterMethod"
+import { type LocationEncounterInsert, type LocationInsert } from "@/db/schemas/Location"
 import Pokedex from "pokedex-promise-v2"
-import { timer, writeToTestFile } from "src/utils/general"
-import overworldAreas from "@tests/OverworldAreas"
 
 const P = new Pokedex({
   cacheLimit: 1000 * 60 * 60 * 24 * 30,
   timeout: 1000 * 30,
 })
 
-type Encounter = {
-  name: string
-  encounterChance: number
-  encounterMethod: string
-  minLevel: number
-  maxLevel: number
+const region = "hoenn"
+const version = "emerald"
+
+export const getAndSaveLocations = async () => {
+  const locations = await getRegionLocations(region)
+  console.log("locations", locations.length)
+
+  const locationAreas = await Promise.all(
+    locations.map(async location => {
+      const areaInfos = await getLocationAreas(location)
+      return areaInfos
+    }),
+  ).then(locationAreas => locationAreas.flat())
+
+  for (const area of locationAreas) {
+    const { location, encounters } = await parseAreaDb(area)
+
+    await insertLocationWithEncounters(location, encounters)
+  }
+
+  // return writeToTestFile(finalLocations)
 }
 
-type Location = {
-  names: string[] | null
-  area: number[]
-  encounters: Encounter[]
-}
-
-type LocationJson = Record<string, Location>
-
-// let locationsJson: LocationJson = {}
-type CustomEncounterDetail = {
-  chance: number
-  max_level: number
-  method: string
-  min_level: number
-}
-type CustomPokemonEncounters = Record<string, CustomEncounterDetail[]>
-
-export const test = () => {
-  const pokemonEncountersRaw: Record<string, CustomEncounterDetail[]> = {}
-  pokemonEncountersRaw["zigzagoon"] = []
-  console.log(pokemonEncountersRaw["zigzagoon"])
-}
-
-// filtered for only overworld locations for now
-export const getOverworldLocations = async (region: string) => {
-  const overWorldFilter = ["city", "town", "route"] as const
-
-  //   locationsJson = {}
-  const regionInfo = await P.getRegionByName(region)
+const getRegionLocations = async (regionName: string) => {
+  const regionInfo = await P.getRegionByName(regionName)
   console.log("regionInfo", regionInfo.name)
 
-  let locations = regionInfo.locations
-  locations = locations.filter(location =>
-    overWorldFilter.find(filter => location.name.includes(filter)),
-  )
-
-  let test = {}
-
-  for (const [index, location] of locations.entries()) {
-    console.log(`Location ${index + 1} of ${locations.length}`)
-
-    const locationInfo = await P.getLocationByName(location.name)
-    const locationTimer = timer(1500)
-    console.log("locationInfo", locationInfo.name)
-    if (locationInfo.areas.length < 1) continue
-
-    const combinedEncounters: CustomPokemonEncounters = {}
-
-    for (const [areaIndex, area] of locationInfo.areas.entries()) {
-      console.log(`    Area ${areaIndex + 1} of ${locationInfo.areas.length}`)
-
-      const timeout = timer(1500)
-      const areaInfo = await P.getLocationAreaByName(area.name)
-      const encounters = areaInfo.pokemon_encounters
-
-      const filtered = filterEncounters(locationInfo.name, encounters)
-
-      // maybe need to combine the encounters of all areas in a location. At least for the overworld
-      //   for (const [pokemonName, details] of Object.entries(filtered)) {
-      //     if (!combinedEncounters[pokemonName]) {
-      //       combinedEncounters[pokemonName] = []
-      //     }
-      //     combinedEncounters[pokemonName].push(...details)
-      //   }
-
-      const areaName =
-        areaInfo.name === locationInfo.name + "-area" ? locationInfo.name : areaInfo.name
-      console.log("      filtered: " + Object.keys(filtered).length)
-
-      if (Object.keys(filtered).length > 0) {
-        test = {
-          ...test,
-          [areaName]: {
-            area: findAreaByRouteName(areaName),
-            // area: [[], []],
-            encounters: filtered,
-          },
-        }
-      }
-
-      await timeout
-    }
-    await locationTimer
+  if (!regionInfo) {
+    throw new Error(`Region ${regionName} not found`)
   }
-  writeToTestFile(test)
-  console.log("wrote test file")
+
+  const areas = await Promise.all(
+    regionInfo.locations.map(async location => {
+      const locationInfo = await P.getLocationByName(location.name)
+      return locationInfo
+    }),
+  ).then(areasArray => {
+    return areasArray.flat()
+  })
+
+  return areas
 }
 
-const filterEncounters = (
-  locationName: string,
-  encounters: Pokedex.LocationAreaPokemonEncounter[],
-) => {
-  const checkForVersions = ["emerald"] as const
-  type CheckForVersionsType = (typeof checkForVersions)[number]
+const getLocationAreas = async (location: Pokedex.Location) => {
+  const areaInfos = await Promise.all(
+    location.areas.map(async area => {
+      return await P.getLocationAreaByName(area.name)
+    }),
+  ).then(areaInfo => areaInfo.flat())
 
-  const pokemonEncountersRaw: Record<string, CustomEncounterDetail[]> = {}
+  return areaInfos
+}
 
-  for (const encounterInfo of encounters) {
-    for (const versionDetail of encounterInfo.version_details) {
-      const isVersion =
-        checkForVersions.indexOf(versionDetail.version.name as CheckForVersionsType) > -1
+const parseAreaDb = async (
+  areaInfo: Pokedex.LocationArea,
+): Promise<{ location: LocationInsert; encounters: LocationEncounterInsert[] }> => {
+  console.log("parsing area", areaInfo.name)
+  const encounters = await parseEncounters(areaInfo.pokemon_encounters)
 
-      if (isVersion) {
-        if (!pokemonEncountersRaw[encounterInfo.pokemon.name]) {
-          //   console.log(`field ${encounterInfo.pokemon.name} not available yet`)
-          pokemonEncountersRaw[encounterInfo.pokemon.name] = []
-        }
+  // remove "-area" at the end of area name, as in that case the area is the same as the location itself
+  const areaName = areaInfo.name
+    .replace("-area", "")
+    .replace(`${region}-`, "")
+    .replace(`-${region}`, "")
 
-        for (const encounterDetail of versionDetail.encounter_details) {
-          const encounter: CustomEncounterDetail = {
-            chance: encounterDetail.chance,
-            max_level: encounterDetail.max_level,
-            method: encounterDetail.method.name,
-            min_level: encounterDetail.min_level,
-          }
-          pokemonEncountersRaw[encounterInfo.pokemon.name as string].push(encounter)
-        }
+  const location: LocationInsert = {
+    name: areaName,
+    region: region,
+    boundsSw: [0, 0],
+    boundsNe: [0, 0],
+  }
+
+  return { location, encounters }
+}
+
+const parseEncounters = async (encounters: Pokedex.LocationAreaPokemonEncounter[]) => {
+  const parsedEncounters: LocationEncounterInsert[] = []
+
+  for (const encounter of encounters) {
+    const pokemonName = encounter.pokemon.name
+    const filteredVersionDetails = encounter.version_details.filter(
+      detail => detail.version.name.toLowerCase() === version.toLowerCase(),
+    )
+
+    if (filteredVersionDetails.length < 1) continue
+
+    const pokemonId = await getPokemonIdByName(pokemonName)
+    for (const encounterDetail of filteredVersionDetails.flatMap(v => v.encounter_details)) {
+      const method = parseEncounterMethod(encounterDetail.method.name)
+      if (!method)
+        throw new Error(`Could not parse ${method} to pokemon encounter method of ${pokemonName}`)
+
+      const locationEncounter: LocationEncounterInsert = {
+        pokemonId: pokemonId,
+        locationId: 0, // will be updated when location is saved to db
+        encounterChance: encounterDetail.chance,
+        minLevel: encounterDetail.min_level,
+        maxLevel: encounterDetail.max_level,
+        encounterMethod: method,
       }
+      parsedEncounters.push(locationEncounter)
     }
   }
-  return pokemonEncountersRaw
-}
 
-// Function to find area by route name
-const findAreaByRouteName = (routeName: string) => {
-  const routeData = overworldAreas[routeName]
-  if (routeData && routeData.area && routeData.area.length === 2) {
-    return routeData.area
-  } else {
-    return [[], []] // Route not found or invalid area data
-  }
+  return parsedEncounters
 }
-
-export const testFilterNames = {}
