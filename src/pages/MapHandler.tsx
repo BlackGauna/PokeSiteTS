@@ -1,5 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query"
-import L, { LatLng, latLngBounds } from "leaflet"
+import L, { latLng, LatLng, latLngBounds } from "leaflet"
 import "leaflet-search"
 import "leaflet-search-types"
 import "leaflet-search/dist/leaflet-search.min.css"
@@ -8,9 +7,7 @@ import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { FeatureGroup, LayerGroup, Marker, Popup, useMap, useMapEvent } from "react-leaflet"
 
 import { useGetRegionLocations } from "../api/LocationApi.ts"
-import { searchPokemonInCache } from "../api/PokemonApi.ts"
 import overworldItemsFile from "../assets/OverworldItems.json"
-import itemSprite from "../assets/sprites/item.png"
 import AreaRectangle from "../components/AreaRectangle.tsx"
 import { RasterCoordsContext } from "../components/RasterCoordsProvider.tsx"
 import { ScrollArea } from "../components/ui/scroll-area.tsx"
@@ -35,11 +32,14 @@ function MapHandler() {
   const { rc: contextRc, isInitialized: contextInitialized } = useContext(RasterCoordsContext)
   const [rc, setRc] = useState<L.RasterCoords | null>(null)
   const [isInitialized, setisInitialized] = useState(contextInitialized)
-
+  const [mapZoom, setMapZoom] = useState(1)
   const [activeInfo, setActiveInfo] = useState<string | null>(null)
 
   const map = useMap()
-  const queryClient = useQueryClient()
+  map.on("zoomend", () => {
+    const zoomLevel = map.getZoom()
+    setMapZoom(zoomLevel)
+  })
 
   // clear the active area, i.e. the catchable pokemon shown when clicking on empty area
   useMapEvent("click", () => {
@@ -117,10 +117,32 @@ function MapHandler() {
     }
   }, [map, areaRefs, locations])
 
-  const generateItemMarkers = () => {
+  const projectAreaCoords = (coords: number[][] | [number[], number[]]) => {
+    if (!rc) return latLngBounds([0, 0], [0, 0])
+    const projected = latLngBounds([
+      rc.unproject(coords[0] as L.PointExpression),
+      rc.unproject(coords[1] as L.PointExpression),
+    ])
+    return projected
+  }
+
+  const coordsToLatlng = useCallback(
+    (coords: [number, number] | [number, number, number] | number[]) => {
+      if (!rc) return latLng(0, 0)
+      const projected = rc!.unproject(coords as L.PointExpression)
+
+      return projected
+    },
+    [rc],
+  )
+
+  const generateItemMarkers = useCallback(() => {
+    // only continue, if map is initialized, so we can use the project the markers correctly
+    if (!isInitialized) return <></>
+
     const itemIcon = L.icon({
-      iconUrl: itemSprite,
-      iconSize: [50, 50],
+      iconUrl: "/sprites/item.png",
+      iconSize: mapZoom < 8 ? [32, 32] : [50, 50],
       className: itemStyles.itemicon,
     })
 
@@ -134,27 +156,14 @@ function MapHandler() {
             icon={itemIcon}
             position={coordsToLatlng(itemFeature.geometry.coordinates) as LatLng}
           >
-            <Popup>{searchPokemonInCache(queryClient, itemFeature.properties!.name)?.types}</Popup>
+            <Popup>{itemFeature.properties!.name}</Popup>
           </Marker>
         )
         return marker
       })
     // </LayerGroup>
     return group
-  }
-
-  const projectAreaCoords = (coords: number[][] | [number[], number[]]) => {
-    const projected = latLngBounds([
-      rc!.unproject(coords[0] as L.PointExpression),
-      rc!.unproject(coords[1] as L.PointExpression),
-    ])
-    return projected
-  }
-
-  const coordsToLatlng = (coords: [number, number] | [number, number, number] | number[]) => {
-    const projected = rc!.unproject(coords as L.PointExpression)
-    return projected
-  }
+  }, [isInitialized, mapZoom, coordsToLatlng])
 
   const generatePolygons = () => {
     const polygons = []
@@ -223,7 +232,6 @@ function MapHandler() {
       // key on scroll area to force rerender when activeInfo changes, so that scroll position is reset
       <ScrollArea key={activeInfo} className="h-full" type="auto">
         <Table onMouseEnter={handleTableMouseOver} onMouseLeave={handleTableMouseOver}>
-          <TableCaption>Catchable pokemon at {activeInfo}</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead className="w-32">Pokemon</TableHead>
@@ -232,22 +240,11 @@ function MapHandler() {
               <TableHead className="w-4 text-center">Chance</TableHead>
             </TableRow>
           </TableHeader>
-          {/* <TableBody>{tableRows}</TableBody> */}
           <TableBody>
-            {encounters.map(element => (
-              <TableRow
-                key={
-                  element.pokemon.name +
-                  element.encounterMethod +
-                  element.encounterChance +
-                  element.maxLevel
-                }
-              >
+            {encounters.map((element, index) => (
+              <TableRow key={element.pokemon.name + index}>
                 <TableCell className="flex items-center">
-                  <img
-                    className="-m-3 w-10"
-                    src={`src/assets/sprites/pokemon/${element.pokemon.id}.gif`}
-                  />
+                  <img className="-m-3 w-10" src={`/sprites/pokemon/${element.pokemon.id}.gif`} />
                   <span className="ml-2">{element.pokemon.name}</span>
                 </TableCell>
                 <TableCell className="text-center">{`${element.minLevel} - ${element.maxLevel} `}</TableCell>
@@ -256,6 +253,7 @@ function MapHandler() {
               </TableRow>
             ))}
           </TableBody>
+          <TableCaption>Catchable pokemon at {activeInfo}</TableCaption>
         </Table>
       </ScrollArea>
     )
@@ -265,6 +263,7 @@ function MapHandler() {
     if (map.scrollWheelZoom.enabled()) map.scrollWheelZoom.disable()
     else map.scrollWheelZoom.enable()
   }
+
   return (
     <>
       <LayerGroup ref={items}>{rc && isInitialized && generateItemMarkers()}</LayerGroup>

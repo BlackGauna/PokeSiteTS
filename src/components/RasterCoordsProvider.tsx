@@ -43,9 +43,11 @@ const RasterCoordsProvider = ({
     rcRef.current = newRc
     setIsInitialized(true)
 
-    map.setMaxBounds(newRc.getMaxBounds())
-    map.setView(newRc.unproject(center as L.PointExpression), initialZoom)
+    const bounds = extendBounds(newRc.getMaxBounds(), 50)
+    map.setMaxBounds(bounds)
+    map.setView(bounds.getCenter(), initialZoom)
     map.setMinZoom(map.getBoundsZoom(newRc.getMaxBounds()))
+    // map.setMinZoom(1)
 
     L.tileLayer(path, {
       className: "z-0",
@@ -58,6 +60,7 @@ const RasterCoordsProvider = ({
       tileSize: 256,
       maxNativeZoom: maxZoom,
       maxZoom: 8,
+      attribution: "Onur",
     }).addTo(map)
   }, [imageWidth, imageHeight, map, center, initialZoom])
 
@@ -68,6 +71,16 @@ const RasterCoordsProvider = ({
     }),
     [isInitialized, rcRef],
   )
+
+  const extendBounds = (bounds: L.LatLngBounds, buffer: number) => {
+    const sw = bounds.getSouthWest()
+    const ne = bounds.getNorthEast()
+
+    const newSw = L.latLng(sw.lat - buffer, sw.lng - buffer)
+    const newNe = L.latLng(ne.lat + buffer, ne.lng + buffer)
+
+    return L.latLngBounds(newSw, newNe)
+  }
 
   return (
     <RasterCoordsContext.Provider value={contextProviderValue}>
