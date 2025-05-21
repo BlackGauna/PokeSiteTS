@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm"
 import { index, integer, pgTable, serial, smallint, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { pokemonEncounterMethod } from "../enums/EncounterMethod"
 import { regionsEnum } from "../enums/Region"
+import { itemPlacementsTable } from "./Item"
 import { Pokemon, type PokemonType } from "./Pokemon"
 
 export const locationTable = pgTable(
@@ -37,6 +38,7 @@ export const locationEncounterTable = pgTable(
 
 export const locationRelations = relations(locationTable, ({ many }) => ({
   encounters: many(locationEncounterTable),
+  items: many(itemPlacementsTable),
 }))
 
 export const locationPokemonRelations = relations(locationEncounterTable, ({ one }) => ({

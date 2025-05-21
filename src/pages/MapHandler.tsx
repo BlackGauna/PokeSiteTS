@@ -7,7 +7,6 @@ import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { FeatureGroup, LayerGroup, Marker, Popup, useMap, useMapEvent } from "react-leaflet"
 
 import { useGetRegionLocations } from "../api/LocationApi.ts"
-import overworldItemsFile from "../assets/OverworldItems.json"
 import AreaRectangle from "../components/AreaRectangle.tsx"
 import { RasterCoordsContext } from "../components/RasterCoordsProvider.tsx"
 import { ScrollArea } from "../components/ui/scroll-area.tsx"
@@ -23,10 +22,8 @@ import {
 import itemStyles from "../styles/itemMarker.module.css"
 import "../styles/leaflet-search.css"
 
+import { useGetItemPlacements } from "../api/ItemApi.ts"
 import { locationCoords } from "../assets/locationCoords.ts"
-
-const overworldItems = overworldItemsFile as GeoJSON.FeatureCollection<GeoJSON.Point>
-// console.log("overworldItems", overworldItems)
 
 function MapHandler() {
   const { rc: contextRc, isInitialized: contextInitialized } = useContext(RasterCoordsContext)
@@ -48,8 +45,10 @@ function MapHandler() {
 
   const items = useRef<L.LayerGroup | null>(null)
   const areaRefs = useRef<Map<string, L.Rectangle>>(new Map())
+  const itemRefs = useRef<Map<number, L.Marker>>(new Map())
 
   const { data: locations } = useGetRegionLocations("hoenn")
+  const { data: itemPlacements } = useGetItemPlacements()
 
   useEffect(() => {
     if (contextRc && contextInitialized) {
@@ -85,8 +84,20 @@ function MapHandler() {
               loc: layer.getBounds().getCenter(),
             }
           })
-        console.log("matches", matches)
 
+        // search item placements
+        if (itemPlacements) {
+          itemPlacements
+            ?.filter(itemPlacement =>
+              itemPlacement.item.name.toLowerCase().includes(text.toLowerCase()),
+            )
+            .forEach(item => {
+              const marker = itemRefs.current.get(item.id)
+              if (!marker) return null
+              const match = { title: item.item.name, loc: marker.getLatLng() as L.LatLng }
+              matches.push(match)
+            })
+        }
         return callback(matches)
       },
       // for showing the search results, when searching for a pokemon
@@ -102,20 +113,27 @@ function MapHandler() {
 
       marker: undefined,
       moveToLocation: (latlng: LatLng, title: string, map: L.Map) => {
+        map.closePopup()
         map.setView(latlng, map.getZoom())
 
-        setActiveInfo(title)
+        let itemFound = false
+        itemRefs.current.forEach(marker => {
+          const test = marker.getLatLng()
+          if (test !== latlng) return
+          itemFound = true
+          marker.openPopup()
+        })
+
+        if (!itemFound) setActiveInfo(title)
       },
     })
-    searchControl.on("search:locationfound", e => {
-      // setActiveInfo(e.title)
-    })
+
     map.addControl(searchControl)
 
     return () => {
       map.removeControl(searchControl)
     }
-  }, [map, areaRefs, locations])
+  }, [map, areaRefs, locations, itemPlacements])
 
   const projectAreaCoords = (coords: number[][] | [number[], number[]]) => {
     if (!rc) return latLngBounds([0, 0], [0, 0])
@@ -138,7 +156,7 @@ function MapHandler() {
 
   const generateItemMarkers = useCallback(() => {
     // only continue, if map is initialized, so we can use the project the markers correctly
-    if (!isInitialized) return <></>
+    if (!isInitialized || !itemPlacements) return <></>
 
     const itemIcon = L.icon({
       iconUrl: "/sprites/item.png",
@@ -146,24 +164,27 @@ function MapHandler() {
       className: itemStyles.itemicon,
     })
 
-    const group =
-      // <LayerGroup ref={items}>
-      overworldItems.features.map((itemFeature, index) => {
-        const marker = (
-          <Marker
-            title={itemFeature.properties!.name}
-            key={index}
-            icon={itemIcon}
-            position={coordsToLatlng(itemFeature.geometry.coordinates) as LatLng}
-          >
-            <Popup>{itemFeature.properties!.name}</Popup>
-          </Marker>
-        )
-        return marker
-      })
-    // </LayerGroup>
-    return group
-  }, [isInitialized, mapZoom, coordsToLatlng])
+    const itemGroup = itemPlacements?.map(itemPlacement => {
+      const marker = (
+        <Marker
+          title={itemPlacement.item.name}
+          key={itemPlacement.id}
+          icon={itemIcon}
+          ref={el => {
+            if (el) {
+              itemRefs.current.set(itemPlacement.id, el)
+            }
+          }}
+          position={coordsToLatlng(itemPlacement.coordinates) as LatLng}
+        >
+          <Popup>{itemPlacement.item.name}</Popup>
+        </Marker>
+      )
+      return marker
+    })
+
+    return itemGroup
+  }, [isInitialized, itemPlacements, mapZoom, coordsToLatlng])
 
   const generatePolygons = () => {
     const polygons = []

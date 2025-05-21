@@ -1,21 +1,25 @@
-import { treaty } from "@elysiajs/eden"
-import type { App } from "../../backend/src/server"
 import { useQuery } from "@tanstack/react-query"
-import { PokemonType } from "@server/db/schemas/Pokemon"
-const client = treaty<App>(import.meta.env.VITE_SERVER_URL)
+import type { ItemPlacementWithItem } from "../../backend/src/db/schemas/Item"
+import { client } from "./client"
 
-export const useGetItemTest = async () => {
+const itemKeys = {
+  all: ["items"] as const,
+  allPlacements: () => [...itemKeys.all, "placements"] as const,
+}
+
+const getItemPlacements = async () => {
+  const res = await client.api.items.placements.get()
+  if (res.error) {
+    throw res.error
+  }
+
+  return res.data as ItemPlacementWithItem[]
+}
+
+export const useGetItemPlacements = () => {
   const query = useQuery({
-    queryKey: ["items"],
-    queryFn: async () => {
-      const res = await client.api.pokemon.index.get()
-      if (res.error) {
-        throw res.error
-      }
-      const pen: PokemonType[] = res.data
-
-      return pen
-    },
+    queryKey: itemKeys.allPlacements(),
+    queryFn: async () => await getItemPlacements(),
   })
 
   return query

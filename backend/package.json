@@ -4,7 +4,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/server.ts",
     "debug": "bun run --inspect src/server.ts",
-    "generate": "npx drizzle-kit generate",
+    "generate": "npx drizzle-kit generate --name ",
     "migrate": "npx drizzle-kit migrate"
   },
   "dependencies": {

@@ -25,8 +25,6 @@ const getLocationRoute = async (locationName: string) => {
 }
 
 const getRegionLocationsRoute = async (regionName: string) => {
-  console.log("regionName", regionName)
-
   const regionEnum = parseRegion(regionName)
   if (!regionEnum) {
     return status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "Region name is not valid")
