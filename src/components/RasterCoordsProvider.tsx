@@ -1,4 +1,5 @@
 import L from "leaflet"
+import "leaflet-rastercoords"
 import { type ReactNode, createContext, useEffect, useMemo, useRef, useState } from "react"
 import { useMap } from "react-leaflet"
 
@@ -16,10 +17,12 @@ const RasterCoordsProvider = ({
   center,
   initialZoom,
   children,
+  maxZoom,
 }: {
   center: number[]
   initialZoom: number
   children?: ReactNode
+  maxZoom: number
 }) => {
   const rcRef = useRef<L.RasterCoords | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -27,7 +30,6 @@ const RasterCoordsProvider = ({
   const [imageWidth, imageHeight] = [13024, 6352]
 
   const path = "tiles/{z}/{x}/{y}.png"
-  const maxZoom = 6
 
   // const [rc, setRc] = useState<L.RasterCoords | null>(null)
 
@@ -58,8 +60,8 @@ const RasterCoordsProvider = ({
       updateWhenIdle: false,
       updateInterval: 100,
       tileSize: 256,
-      maxNativeZoom: maxZoom,
-      maxZoom: 8,
+      maxNativeZoom: 6,
+      maxZoom: maxZoom,
       attribution: "Onur",
     }).addTo(map)
   }, [imageWidth, imageHeight, map, center, initialZoom])

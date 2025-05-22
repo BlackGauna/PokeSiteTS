@@ -30,4 +30,7 @@ export const insertItems = async () => {
     console.log("error during insertItems")
     throw error
   }
+
+  console.log("finished inserting items");
+  
 }

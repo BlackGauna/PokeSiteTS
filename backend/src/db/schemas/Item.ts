@@ -10,7 +10,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import { itemTypeEnum } from "../enums/ItemType"
-import { locationTable } from "./Location"
+import { locationTable, type Location } from "./Location"
 
 export const itemsTable = pgTable("items", {
   id: serial().primaryKey(),
@@ -57,3 +57,4 @@ export type Item = typeof itemsTable.$inferSelect
 export type ItemPlacementInsert = typeof itemPlacementsTable.$inferInsert
 export type ItemPlacement = typeof itemPlacementsTable.$inferSelect
 export type ItemPlacementWithItem = ItemPlacement & { item: Item }
+export type ItemPlacementWithRelations = ItemPlacement & { item: Item; location: Location }

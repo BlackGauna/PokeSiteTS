@@ -10,6 +10,9 @@ import pokedexRoutes from "./routes/pokedex"
 const app = new Elysia()
   .use(cors({ origin: "*" }))
   .use(HttpStatusCode())
+  .onRequest(request => {
+    console.log(request.request.url)
+  })
   .get("/", () => "Hi")
   .group("/api", app => app.use(pokedexRoutes))
   .group("/api", app => app.use(locationRoutes))

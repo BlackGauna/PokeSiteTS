@@ -29,7 +29,19 @@ export const getAndSaveLocations = async () => {
     await insertLocationWithEncounters(location, encounters)
   }
 
-  // return writeToTestFile(finalLocations)
+  const townsAndCities = locations
+    .filter(loc => loc.name.includes("-city") || loc.name.includes("-town"))
+    .map(
+      (loc): LocationInsert => ({
+        name: loc.name,
+        region: "hoenn",
+        boundsSw: [0, 0],
+        boundsNe: [0, 0],
+      }),
+    )
+  for (const town of townsAndCities) {
+    await insertLocationWithEncounters(town, [])
+  }
 }
 
 const getRegionLocations = async (regionName: string) => {

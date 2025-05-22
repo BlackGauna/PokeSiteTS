@@ -289,7 +289,7 @@ export const locationCoords: { [key: string]: number[][] } = {
   ],
   "route-124": [
     [9072, 1120],
-    [10354, 2464],
+    [10354, 2352],
   ],
   "route-124-underwater": [
     [0, 0],
@@ -300,7 +300,7 @@ export const locationCoords: { [key: string]: number[][] } = {
     [11632, 1712],
   ],
   "route-126": [
-    [9072, 2464],
+    [9072, 2352],
     [10352, 3532],
   ],
   "route-126-underwater": [

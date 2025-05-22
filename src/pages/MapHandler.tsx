@@ -1,10 +1,20 @@
 import L, { latLng, LatLng, latLngBounds } from "leaflet"
+import "leaflet-rastercoords"
 import "leaflet-search"
 import "leaflet-search-types"
 import "leaflet-search/dist/leaflet-search.min.css"
 import "leaflet/dist/leaflet.css"
+
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
-import { FeatureGroup, LayerGroup, Marker, Popup, useMap, useMapEvent } from "react-leaflet"
+import {
+  FeatureGroup,
+  LayerGroup,
+  Marker,
+  Popup,
+  useMap,
+  useMapEvent,
+  useMapEvents,
+} from "react-leaflet"
 
 import { useGetRegionLocations } from "../api/LocationApi.ts"
 import AreaRectangle from "../components/AreaRectangle.tsx"
@@ -22,6 +32,7 @@ import {
 import itemStyles from "../styles/itemMarker.module.css"
 import "../styles/leaflet-search.css"
 
+import { ItemForm } from "@/components/ItemForm.tsx"
 import { useGetItemPlacements } from "../api/ItemApi.ts"
 import { locationCoords } from "../assets/locationCoords.ts"
 
@@ -31,6 +42,10 @@ function MapHandler() {
   const [isInitialized, setisInitialized] = useState(contextInitialized)
   const [mapZoom, setMapZoom] = useState(1)
   const [activeInfo, setActiveInfo] = useState<string | null>(null)
+  const [formPosition, setFormPosition] = useState<L.LatLng | null>(null)
+  const [mousePosition, setMousePosition] = useState<L.LatLng | null>(null)
+
+  const itemPopupRef = useRef<L.Popup | null>(L.popup())
 
   const map = useMap()
   map.on("zoomend", () => {
@@ -91,10 +106,13 @@ function MapHandler() {
             ?.filter(itemPlacement =>
               itemPlacement.item.name.toLowerCase().includes(text.toLowerCase()),
             )
-            .forEach(item => {
-              const marker = itemRefs.current.get(item.id)
+            .forEach(itemPlacement => {
+              const marker = itemRefs.current.get(itemPlacement.id)
               if (!marker) return null
-              const match = { title: item.item.name, loc: marker.getLatLng() as L.LatLng }
+              const match = {
+                title: `${itemPlacement.item.name} (${itemPlacement.location.name})`,
+                loc: marker.getLatLng() as L.LatLng,
+              }
               matches.push(match)
             })
         }
@@ -112,14 +130,16 @@ function MapHandler() {
       autoType: false,
 
       marker: undefined,
-      moveToLocation: (latlng: LatLng, title: string, map: L.Map) => {
+      moveToLocation: (latlng: L.LatLng, title: string, map: L.Map) => {
         map.closePopup()
         map.setView(latlng, map.getZoom())
 
         let itemFound = false
         itemRefs.current.forEach(marker => {
           const test = marker.getLatLng()
-          if (test !== latlng) return
+          // need to compare the string represenation, because of float imprecision (I guess)
+          if (test.toString() !== latlng.toString()) return
+
           itemFound = true
           marker.openPopup()
         })
@@ -167,7 +187,7 @@ function MapHandler() {
     const itemGroup = itemPlacements?.map(itemPlacement => {
       const marker = (
         <Marker
-          title={itemPlacement.item.name}
+          title={itemPlacement.item?.name}
           key={itemPlacement.id}
           icon={itemIcon}
           ref={el => {
@@ -177,7 +197,9 @@ function MapHandler() {
           }}
           position={coordsToLatlng(itemPlacement.coordinates) as LatLng}
         >
-          <Popup>{itemPlacement.item.name}</Popup>
+          <Popup>
+            {itemPlacement.item.name} x{itemPlacement.amount}
+          </Popup>
         </Marker>
       )
       return marker
@@ -285,6 +307,29 @@ function MapHandler() {
     else map.scrollWheelZoom.enable()
   }
 
+  const latLngToPixelCoords = (latlng: L.LatLng) => {
+    if (!rc) return L.point(0, 0)
+
+    const pixelCoords = rc.project(latlng)
+    return pixelCoords
+  }
+
+  const [pendingKeyEvent, setPendingKeyEvent] = useState(false)
+  useMapEvents({
+    async keypress(e) {
+      if (pendingKeyEvent || e.originalEvent.key !== "a" || itemPopupRef.current?.isOpen()) return
+      setPendingKeyEvent(true)
+
+      // await new Promise(resolve => setTimeout(resolve, 2000))
+      setFormPosition(mousePosition)
+      setPendingKeyEvent(false)
+    },
+    mousemove: e => {
+      const mousePos = e.latlng
+      setMousePosition(mousePos)
+    },
+  })
+
   return (
     <>
       <LayerGroup ref={items}>{rc && isInitialized && generateItemMarkers()}</LayerGroup>
@@ -295,10 +340,16 @@ function MapHandler() {
           ref={el => {
             if (el) L.DomEvent.disableClickPropagation(el as HTMLElement) // stop leaflet mouse events over the table
           }}
-          className="absolute bottom-0 right-0 z-[10000] h-[50%]  w-1/3 cursor-auto  border-2 border-b-0 border-solid border-green-500 bg-white/50  p-1 text-black backdrop-blur-md"
+          className="absolute right-0 bottom-0 z-[10000] h-[50%] w-1/3 cursor-auto border-2 border-b-0 border-solid border-green-500 bg-white/50 p-1 text-black backdrop-blur-md"
         >
           {cachedEncounters()}
         </div>
+      )}
+
+      {formPosition && (
+        <Popup position={formPosition} ref={itemPopupRef}>
+          <ItemForm position={latLngToPixelCoords(formPosition)}></ItemForm>
+        </Popup>
       )}
     </>
   )

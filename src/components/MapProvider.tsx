@@ -10,13 +10,13 @@ function MapProvider() {
     <MapContainer
       center={[0, 0]}
       className="z-0 h-screen w-screen"
-      zoomSnap={0.5}
-      zoomDelta={0.5}
+      // zoomSnap={0.5}
+      // zoomDelta={0.5}
       crs={L.CRS.Simple}
       preferCanvas={true}
-      maxZoom={8}
+      maxZoom={16}
     >
-      <RasterCoordsProvider center={[3719, 5338]} initialZoom={0}>
+      <RasterCoordsProvider center={[3719, 5338]} initialZoom={0} maxZoom={16}>
         <MapHandler />
       </RasterCoordsProvider>
     </MapContainer>
