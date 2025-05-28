@@ -29,7 +29,7 @@ export const locationEncounterTable = pgTable(
       .notNull(),
 
     encounterChance: smallint("encounter_chance").notNull(),
-    encounterMethod: pokemonEncounterMethod("encounter_method"),
+    encounterMethod: pokemonEncounterMethod("encounter_method").notNull(),
     minLevel: smallint("min_level").notNull(),
     maxLevel: smallint("max_level").notNull(),
   },

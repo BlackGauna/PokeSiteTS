@@ -1,0 +1,1 @@
+ALTER TABLE "location_encounters" ALTER COLUMN "encounter_method" SET NOT NULL;

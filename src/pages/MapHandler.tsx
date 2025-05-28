@@ -5,7 +5,7 @@ import "leaflet-search-types"
 import "leaflet-search/dist/leaflet-search.min.css"
 import "leaflet/dist/leaflet.css"
 
-import { useCallback, useContext, useEffect, useRef, useState } from "react"
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import {
   FeatureGroup,
   LayerGroup,
@@ -33,6 +33,14 @@ import itemStyles from "../styles/itemMarker.module.css"
 import "../styles/leaflet-search.css"
 
 import { ItemForm } from "@/components/ItemForm.tsx"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible.tsx"
+import type { GroupedEncounter } from "@/types/GroupedEncounter.ts"
+import type { LocationEncounterWithPokemon } from "backend/src/db/schemas/Location.ts"
+import { CornerDownRight } from "lucide-react"
 import { useGetItemPlacements } from "../api/ItemApi.ts"
 import { locationCoords } from "../assets/locationCoords.ts"
 
@@ -230,9 +238,6 @@ function MapHandler() {
     return polygons
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const cachedEncounters = useCallback(() => generateEncounterTable(), [activeInfo, locations])
-
   const methodSort = [
     "walk",
     "surf",
@@ -267,16 +272,21 @@ function MapHandler() {
     const location = locations.find(element => element.name === activeInfo)
     if (!location) return empty
 
-    const encounters = location.encounters.sort(
-      (a, b) => methodIndex[a.encounterMethod!] - methodIndex[b.encounterMethod!],
+    const encounters = groupEncounters(location.encounters).sort(
+      (a, b) =>
+        methodIndex[a.encounterMethod] - methodIndex[b.encounterMethod] ||
+        b.encounterChance - a.encounterChance,
     )
 
     return (
       // key on scroll area to force rerender when activeInfo changes, so that scroll position is reset
       <ScrollArea key={activeInfo} className="h-full" type="auto">
-        <Table onMouseEnter={handleTableMouseOver} onMouseLeave={handleTableMouseOver}>
+        <Table
+          onMouseEnter={_ => handleTableMouseOver(false)}
+          onMouseLeave={_ => handleTableMouseOver(true)}
+        >
           <TableHeader>
-            <TableRow>
+            <TableRow className="hover:bg-inherit">
               <TableHead className="w-32">Pokemon</TableHead>
               <TableHead className="w-16 text-center">Level</TableHead>
               <TableHead className="w-12 text-center">Method</TableHead>
@@ -285,15 +295,50 @@ function MapHandler() {
           </TableHeader>
           <TableBody>
             {encounters.map((element, index) => (
-              <TableRow key={element.pokemon.name + index}>
-                <TableCell className="flex items-center">
-                  <img className="-m-3 w-10" src={`/sprites/pokemon/${element.pokemon.id}.gif`} />
-                  <span className="ml-2">{element.pokemon.name}</span>
-                </TableCell>
-                <TableCell className="text-center">{`${element.minLevel} - ${element.maxLevel} `}</TableCell>
-                <TableCell className="text-center">{element.encounterMethod} </TableCell>
-                <TableCell className="text-center">{`${element.encounterChance}%`} </TableCell>
-              </TableRow>
+              <Collapsible asChild>
+                <>
+                  <CollapsibleTrigger asChild>
+                    <TableRow className="hover:bg-primary/50" key={element.pokemon.name + index}>
+                      <TableCell className="flex items-center">
+                        <img
+                          className="-m-3 w-10"
+                          src={`/sprites/pokemon/${element.pokemon.id}.gif`}
+                        />
+                        <span className="ml-2">{element.pokemon.name}</span>
+                      </TableCell>
+                      <TableCell className="text-center">{`${element.minLevel} - ${element.maxLevel} `}</TableCell>
+                      <TableCell className="text-center">{element.encounterMethod} </TableCell>
+                      <TableCell className="text-center">
+                        {`${element.encounterChance}%`}{" "}
+                      </TableCell>
+                    </TableRow>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent asChild>
+                    <>
+                      {element.encounters.map((enc, childIndex) => (
+                        <TableRow
+                          className="hover:bg-primary/50"
+                          key={element.pokemon.name + index + element.pokemon.name + childIndex}
+                        >
+                          <TableCell className="flex items-center">
+                            <CornerDownRight className="mx-1" size={16} strokeWidth={1} />
+                            <img
+                              className="-m-3 w-10"
+                              src={`/sprites/pokemon/${element.pokemon.id}.gif`}
+                            />
+                            <span className="ml-2">{element.pokemon.name}</span>
+                          </TableCell>
+                          <TableCell className="text-center">{`${enc.minLevel} - ${enc.maxLevel} `}</TableCell>
+                          <TableCell className="text-center">{enc.encounterMethod} </TableCell>
+                          <TableCell className="text-center">
+                            {`${enc.encounterChance}%`}{" "}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </>
+                  </CollapsibleContent>
+                </>
+              </Collapsible>
             ))}
           </TableBody>
           <TableCaption>Catchable pokemon at {activeInfo}</TableCaption>
@@ -302,8 +347,39 @@ function MapHandler() {
     )
   }
 
-  const handleTableMouseOver = () => {
-    if (map.scrollWheelZoom.enabled()) map.scrollWheelZoom.disable()
+  const groupEncounters = (encounters: LocationEncounterWithPokemon[]) => {
+    const pokemonEncounters: GroupedEncounter[] = []
+
+    for (const encounter of encounters) {
+      let groupedEncounter = pokemonEncounters.find(
+        group =>
+          group.pokemon.id === encounter.pokemonId &&
+          group.encounterMethod === encounter.encounterMethod,
+      )
+
+      if (!groupedEncounter) {
+        pokemonEncounters.push({
+          encounterChance: encounter.encounterChance,
+          encounterMethod: encounter.encounterMethod,
+          encounters: [encounter],
+          maxLevel: encounter.maxLevel,
+          minLevel: encounter.minLevel,
+          pokemon: encounter.pokemon,
+        })
+        continue
+      }
+
+      groupedEncounter.encounters.push(encounter)
+      groupedEncounter.encounterChance += encounter.encounterChance
+      groupedEncounter.minLevel = Math.min(groupedEncounter.minLevel, encounter.minLevel)
+      groupedEncounter.maxLevel = Math.min(groupedEncounter.maxLevel, encounter.maxLevel)
+    }
+
+    return pokemonEncounters
+  }
+
+  const handleTableMouseOver = (enable: boolean) => {
+    if (!enable) map.scrollWheelZoom.disable()
     else map.scrollWheelZoom.enable()
   }
 
@@ -330,6 +406,9 @@ function MapHandler() {
     },
   })
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const cachedEncounters = useMemo(() => generateEncounterTable(), [activeInfo, locations])
+
   return (
     <>
       <LayerGroup ref={items}>{rc && isInitialized && generateItemMarkers()}</LayerGroup>
@@ -342,7 +421,7 @@ function MapHandler() {
           }}
           className="absolute right-0 bottom-0 z-[10000] h-[50%] w-1/3 cursor-auto border-2 border-b-0 border-solid border-green-500 bg-white/50 p-1 text-black backdrop-blur-md"
         >
-          {cachedEncounters()}
+          {cachedEncounters}
         </div>
       )}
 
