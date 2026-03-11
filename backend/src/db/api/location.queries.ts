@@ -48,6 +48,21 @@ export const getLocation = async (locationName: string) => {
   return location
 }
 
+export const getLocationId = async (locationName: string) => {
+  const location = await db.query.locationTable.findFirst({
+    where: ilike(locationTable.name, locationName.toLowerCase()),
+    columns: {
+      id: true,
+    },
+  })
+
+  if (!location) {
+    throw new Error(`Could not find location ${locationName}`)
+  }
+
+  return location.id
+}
+
 export const insertLocationWithEncounters = async (
   location: LocationInsert,
   encounters: LocationEncounterInsert[],

@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react"
 import { treaty } from "@elysiajs/eden"
 import { useQueryClient } from "@tanstack/react-query"
 import "leaflet-rastercoords"
-import type { PokemonType } from "../../backend/src/db/schemas/Pokemon"
+import type { Pokemon } from "../../backend/src/db/schemas/Pokemon"
 import type { App } from "../../backend/src/server"
 import * as overworldItems from "../assets/OverworldItems.json"
 import "../utils/leaflet-zoom"
@@ -14,7 +14,7 @@ import "../utils/leaflet-zoom"
 const client = treaty<App>(import.meta.env.VITE_SERVER_URL)
 
 // Custom hook for fetching data
-const fetchItemData = async (): Promise<PokemonType> => {
+const fetchItemData = async (): Promise<Pokemon> => {
   const res = await client.api.pokemon.get()
   if (res.error) {
     throw res.error

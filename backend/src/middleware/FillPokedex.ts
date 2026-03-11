@@ -1,6 +1,6 @@
 import type { LearnMethod } from "@/db/enums/MoveLearnMethod"
 import type { MoveType } from "@schemas/Move"
-import type { PokemonType } from "@schemas/Pokemon"
+import type { Pokemon } from "@schemas/Pokemon"
 import { VersionGroup } from "@schemas/Shared"
 import Pokedex from "pokedex-promise-v2"
 import {
@@ -117,7 +117,7 @@ const insertPokemonToDb = async (allPokemonData: PokemonApi[]) => {
     const stats = generateStats(pokemonApiData.stats)
     const types = generateTypes(pokemonApiData.types)
 
-    const pokemonDb: PokemonType = {
+    const pokemonDb: Pokemon = {
       id: pokemonApiData.id,
       name: findEnglishName(pokemonNamesDb),
       hp: stats.hp,

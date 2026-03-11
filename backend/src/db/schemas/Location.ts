@@ -3,7 +3,7 @@ import { index, integer, pgTable, serial, smallint, text, uniqueIndex } from "dr
 import { pokemonEncounterMethod } from "../enums/EncounterMethod"
 import { regionsEnum } from "../enums/Region"
 import { itemPlacementsTable } from "./Item"
-import { Pokemon, type PokemonType } from "./Pokemon"
+import { pokemonTable, type Pokemon } from "./Pokemon"
 
 export const locationTable = pgTable(
   "location",
@@ -25,7 +25,7 @@ export const locationEncounterTable = pgTable(
       .references(() => locationTable.id),
 
     pokemonId: smallint("pokemon_id")
-      .references(() => Pokemon.id)
+      .references(() => pokemonTable.id)
       .notNull(),
 
     encounterChance: smallint("encounter_chance").notNull(),
@@ -46,9 +46,9 @@ export const locationPokemonRelations = relations(locationEncounterTable, ({ one
     fields: [locationEncounterTable.locationId],
     references: [locationTable.id],
   }),
-  pokemon: one(Pokemon, {
+  pokemon: one(pokemonTable, {
     fields: [locationEncounterTable.pokemonId],
-    references: [Pokemon.id],
+    references: [pokemonTable.id],
   }),
 }))
 
@@ -57,4 +57,4 @@ export type Location = typeof locationTable.$inferSelect
 export type LocationWithEncounters = Location & { encounters: LocationEncounterWithPokemon[] }
 export type LocationEncounterInsert = typeof locationEncounterTable.$inferInsert
 export type LocationEncounter = typeof locationEncounterTable.$inferSelect
-export type LocationEncounterWithPokemon = LocationEncounter & { pokemon: PokemonType }
+export type LocationEncounterWithPokemon = LocationEncounter & { pokemon: Pokemon }

@@ -1,6 +1,6 @@
 import { pgEnum } from "drizzle-orm/pg-core"
 
-export const moveLearnMethod = pgEnum("move_learn_method", [
+export const moveLearnMethod = pgEnum("move-learn-method", [
   "level-up",
   "egg",
   "tutor",

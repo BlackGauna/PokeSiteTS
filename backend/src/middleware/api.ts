@@ -1,22 +1,22 @@
 import type { LearnMethod } from "@/db/enums/MoveLearnMethod"
-import { type MoveNameType, type MoveType, Move, MoveName } from "@/db/schemas/Move"
-import { type PokemonType, Pokemon, PokemonName } from "@/db/schemas/Pokemon"
-import { type PokemonMoveType, PokemonMove } from "@/db/schemas/PokemonMove"
+import { type MoveNameType, type MoveType, moveNameTable, moveTable } from "@/db/schemas/Move"
+import { type Pokemon, pokemonNameTable, pokemonTable } from "@/db/schemas/Pokemon"
+import { type PokemonMove, pokemonMoveTable } from "@/db/schemas/PokemonMove"
 import type { NamesBaseTableType, VersionGroup } from "@/db/schemas/Shared"
 import { db } from "src/db/db"
 
 // TODO: add try catch blocks for queries
 export const insertNewPokemonData = async (
-  pokemon: PokemonType,
+  pokemon: Pokemon,
   pokemonNames: NamesBaseTableType[],
 ) => {
   return await db.transaction(async tx => {
     const pokemonId = (
       await tx
-        .insert(Pokemon)
+        .insert(pokemonTable)
         .values(pokemon)
-        .onConflictDoUpdate({ target: Pokemon.id, set: { ...pokemon } })
-        .returning({ id: Pokemon.id })
+        .onConflictDoUpdate({ target: pokemonTable.id, set: { ...pokemon } })
+        .returning({ id: pokemonTable.id })
     )[0]?.id
 
     if (!pokemonId) throw new Error("Pokemon id is undefined")
@@ -26,7 +26,7 @@ export const insertNewPokemonData = async (
       pokemonId: pokemonId,
     }))
 
-    await tx.insert(PokemonName).values(pokemonNamesWithId).onConflictDoNothing()
+    await tx.insert(pokemonNameTable).values(pokemonNamesWithId).onConflictDoNothing()
 
     return pokemonId
   })
@@ -51,13 +51,13 @@ export const insertMovesData = async (movesForDb: MoveForDb[]) => {
 
       const moveId = (
         await tx
-          .insert(Move)
+          .insert(moveTable)
           .values(moveforDbElement.move)
           .onConflictDoUpdate({
-            target: Move.name,
+            target: moveTable.name,
             set: { ...moveforDbElement.move },
           })
-          .returning({ id: Move.id })
+          .returning({ id: moveTable.id })
       )[0]?.id
 
       // TODO: error handling
@@ -68,17 +68,17 @@ export const insertMovesData = async (movesForDb: MoveForDb[]) => {
         moveId: moveId,
       }))
 
-      await tx.insert(MoveName).values(names).onConflictDoNothing()
+      await tx.insert(moveNameTable).values(names).onConflictDoNothing()
 
       const pokemonMoveData = moveforDbElement.pokemonLearnData.map(pokemonData => {
-        const pokemonMove: PokemonMoveType = {
+        const pokemonMove: PokemonMove = {
           ...pokemonData,
           moveId: moveId,
         }
         return pokemonMove
       })
 
-      await tx.insert(PokemonMove).values(pokemonMoveData).onConflictDoNothing()
+      await tx.insert(pokemonMoveTable).values(pokemonMoveData).onConflictDoNothing()
     }
   })
 }

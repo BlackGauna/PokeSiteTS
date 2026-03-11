@@ -1,18 +1,18 @@
 import { relations } from "drizzle-orm"
 import { pgTable, primaryKey, smallint } from "drizzle-orm/pg-core"
 import { moveLearnMethod } from "../enums/MoveLearnMethod"
-import { Move } from "./Move"
-import { Pokemon } from "./Pokemon"
+import { moveTable } from "./Move"
+import { pokemonTable } from "./Pokemon"
 import { versionGroups } from "./Shared"
 
-export const PokemonMove = pgTable(
+export const pokemonMoveTable = pgTable(
   "pokemon_moves",
   {
     pokemonId: smallint()
-      .references(() => Pokemon.id)
+      .references(() => pokemonTable.id)
       .notNull(),
     moveId: smallint()
-      .references(() => Move.id)
+      .references(() => moveTable.id)
       .notNull(),
     learnMethod: moveLearnMethod().notNull(),
     level: smallint().notNull(),
@@ -21,15 +21,15 @@ export const PokemonMove = pgTable(
   table => [primaryKey({ columns: [table.pokemonId, table.moveId] })],
 )
 
-export const pokemonMoveRelations = relations(PokemonMove, ({ one }) => ({
-  pokemon: one(Pokemon, {
-    fields: [PokemonMove.pokemonId],
-    references: [Pokemon.id],
+export const pokemonMoveRelations = relations(pokemonMoveTable, ({ one }) => ({
+  pokemon: one(pokemonTable, {
+    fields: [pokemonMoveTable.pokemonId],
+    references: [pokemonTable.id],
   }),
-  move: one(Move, {
-    fields: [PokemonMove.moveId],
-    references: [Move.id],
+  move: one(moveTable, {
+    fields: [pokemonMoveTable.moveId],
+    references: [moveTable.id],
   }),
 }))
 
-export type PokemonMoveType = typeof PokemonMove.$inferInsert
+export type PokemonMove = typeof pokemonMoveTable.$inferInsert

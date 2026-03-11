@@ -1,9 +1,9 @@
 import type { PokemonEncounterMethod } from "backend/src/db/enums/EncounterMethod"
 import type { LocationEncounter } from "backend/src/db/schemas/Location"
-import type { PokemonType } from "backend/src/db/schemas/Pokemon"
+import type { Pokemon } from "backend/src/db/schemas/Pokemon"
 
 export type GroupedEncounter = {
-  pokemon: PokemonType
+  pokemon: Pokemon
   encounterChance: number
   encounterMethod: PokemonEncounterMethod
   minLevel: number

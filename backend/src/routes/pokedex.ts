@@ -1,4 +1,4 @@
-import { Pokemon, type PokemonWithNamesAndMoves } from "@schemas/Pokemon"
+import { pokemonTable, type PokemonWithNamesAndMoves } from "@schemas/Pokemon"
 import { eq, ilike } from "drizzle-orm"
 import Elysia, { status, t } from "elysia"
 // import { Hono } from "hono"
@@ -26,7 +26,7 @@ const getPokemonwithNames = async (idOrName: number | string) => {
   try {
     if (typeof idOrName === "number") {
       const result = await db.query.Pokemon.findFirst({
-        where: eq(Pokemon.id, idOrName),
+        where: eq(pokemonTable.id, idOrName),
         with: { names: true, moves: true },
       })
 
@@ -37,7 +37,7 @@ const getPokemonwithNames = async (idOrName: number | string) => {
       return [result] as unknown as PokemonWithNamesAndMoves[]
     } else {
       const result = await db.query.Pokemon.findFirst({
-        where: ilike(Pokemon.name, idOrName),
+        where: ilike(pokemonTable.name, idOrName),
         with: { names: true, moves: true },
       })
 

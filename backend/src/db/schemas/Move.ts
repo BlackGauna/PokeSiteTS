@@ -1,7 +1,8 @@
 import { relations } from "drizzle-orm"
 import { pgTable, primaryKey, serial, smallint, text } from "drizzle-orm/pg-core"
-import { PokemonMove } from "./PokemonMove"
+import { pokemonMoveTable } from "./PokemonMove"
 import { NamesTableBase, PokemonTypes } from "./Shared"
+import { trainerFightPokemonMoveTable } from "./Trainer"
 
 // export const Ailment = pgEnum("Ailment", [
 //   "unknown",
@@ -26,7 +27,7 @@ import { NamesTableBase, PokemonTypes } from "./Shared"
 //   "ingrain",
 // ])
 
-export const Move = pgTable("move", {
+export const moveTable = pgTable("move", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   power: smallint("power"),
@@ -39,31 +40,30 @@ export const Move = pgTable("move", {
   // ailmentChance: smallint("ailmentChance"),
 })
 
-export const MoveName = pgTable(
+export const moveNameTable = pgTable(
   "move_name",
   {
     ...NamesTableBase,
     id: serial("id").unique(),
     moveId: smallint("move_id")
-      .references(() => Move.id)
+      .references(() => moveTable.id)
       .notNull(),
   },
-  table => ({
-    pk: primaryKey({ columns: [table.moveId, table.language] }),
-  }),
+  table => [primaryKey({ columns: [table.moveId, table.language] })],
 )
 
-export const MoveRelations = relations(Move, ({ many }) => ({
-  names: many(MoveName),
-  pokemon: many(PokemonMove),
+export const moveRelations = relations(moveTable, ({ many }) => ({
+  names: many(moveNameTable),
+  pokemon: many(pokemonMoveTable),
+  trainerPokemonMoves: many(trainerFightPokemonMoveTable),
 }))
 
-export const MoveNameRelations = relations(MoveName, ({ one }) => ({
-  names: one(Move, {
-    fields: [MoveName.moveId],
-    references: [Move.id],
+export const moveNameRelations = relations(moveNameTable, ({ one }) => ({
+  names: one(moveTable, {
+    fields: [moveNameTable.moveId],
+    references: [moveTable.id],
   }),
 }))
 
-export type MoveType = typeof Move.$inferInsert
-export type MoveNameType = typeof MoveName.$inferInsert
+export type MoveType = typeof moveTable.$inferInsert
+export type MoveNameType = typeof moveNameTable.$inferInsert

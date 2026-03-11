@@ -40,4 +40,6 @@ console.log("database:", process.env.DATABASE_URL!)
 
 // await insertItems()
 
+// await parseTrainerPokemon()
+
 export type App = typeof app
