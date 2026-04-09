@@ -1,20 +1,18 @@
-import { addItemPlacement, getItemPlacements, getItems } from "@/db/api/item.queries"
+import { addItemPlacement, getItemPlacements, getItems } from "@/db/queries/item.queries"
 import {
-  itemPlacementsTable,
+  itemPlacementInsertSchema,
   type Item,
   type ItemPlacementInsert,
   type ItemPlacementWithItem,
-} from "@/db/schemas"
-import { createInsertSchema } from "drizzle-typebox"
-import Elysia from "elysia"
+} from "@/types/Item"
 
-const _createItemPlacement = createInsertSchema(itemPlacementsTable, {})
+import Elysia from "elysia"
 
 export const itemRoutes = new Elysia({ prefix: "items" })
   .get("/", async () => await getItemsRoute())
   .get("/placements", async () => await getItemPlacementsRoute())
   .post("/placements", async ({ body }) => await addItemPlacementRoute(body), {
-    body: _createItemPlacement,
+    body: itemPlacementInsertSchema,
   })
 
 const getItemPlacementsRoute = async () => {

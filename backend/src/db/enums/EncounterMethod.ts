@@ -1,6 +1,6 @@
 import { pgEnum } from "drizzle-orm/pg-core"
 
-export const pokemonEncounterMethod = pgEnum("pokemon_encounter_method", [
+export const pokemonEncounterMethod = pgEnum("pokemon-encounter-method", [
   "walk",
   "old-rod",
   "good-rod",

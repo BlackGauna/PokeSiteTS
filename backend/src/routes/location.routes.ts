@@ -1,6 +1,6 @@
-import { getLocation, getRegionLocations } from "@/db/api/location.queries"
 import { parseRegion } from "@/db/enums/Region"
-import { type LocationWithEncounters } from "@/db/schemas/Location"
+import { getLocation, getRegionLocations } from "@/db/queries/location.queries"
+import type { LocationWithEncounters } from "@/types/Location"
 import Elysia, { status, t } from "elysia"
 import { HttpStatusEnum } from "elysia-http-status-code/status"
 

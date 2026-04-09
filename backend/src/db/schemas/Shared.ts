@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text } from "drizzle-orm/pg-core"
+import { pgEnum, text } from "drizzle-orm/pg-core"
 
 export const PokemonTypes = pgEnum("type", [
   "normal",
@@ -47,8 +47,8 @@ export const NamesTableBase = {
   language: Languages("language").notNull(),
   name: text("name").notNull(),
 }
-const insertNameTable = pgTable("NOT_USED", { ...NamesTableBase })
-export type NamesBaseTableType = typeof insertNameTable.$inferInsert
+
+export type NamesBase = { language: Languages; name: string }
 
 export const VersionGroup = [
   "red-blue",
