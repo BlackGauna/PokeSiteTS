@@ -1,0 +1,1024 @@
+{
+  "id": "bd5cec9a-3bfa-472a-8bd3-6ce2a1fcc223",
+  "prevIds": [
+    "910bad87-dbf7-472d-bc5b-74a6b3704e53"
+  ],
+  "version": "8",
+  "dialect": "postgres",
+  "ddl": [
+    {
+      "isRlsEnabled": false,
+      "name": "location_encounters",
+      "schema": "public",
+      "entityType": "tables"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "location_id",
+      "schema": "public",
+      "table": "location_encounters",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pokemon_id",
+      "schema": "public",
+      "table": "location_encounters",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "encounter_chance",
+      "schema": "public",
+      "table": "location_encounters",
+      "entityType": "columns"
+    },
+    {
+      "type": "pokemon_encounter_method",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "encounter_method",
+      "schema": "public",
+      "table": "location_encounters",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "min_level",
+      "schema": "public",
+      "table": "location_encounters",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "max_level",
+      "schema": "public",
+      "table": "location_encounters",
+      "entityType": "columns"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        {
+          "value": "location_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "pokemon_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "location_encounters_location_id_pokemon_id_index",
+      "schema": "public",
+      "table": "location_encounters",
+      "entityType": "indexes"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "location_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "location",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "location_encounters_location_id_location_id_fk",
+      "schema": "public",
+      "table": "location_encounters",
+      "entityType": "fks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "pokemon_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "pokemons",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "location_encounters_pokemon_id_pokemons_id_fk",
+      "schema": "public",
+      "table": "location_encounters",
+      "entityType": "fks"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "location",
+      "schema": "public",
+      "entityType": "tables"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "location_pkey",
+      "schema": "public",
+      "table": "location",
+      "entityType": "pks"
+    },
+    {
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "schema": "public",
+      "table": "location",
+      "entityType": "columns"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "public",
+      "table": "location",
+      "entityType": "columns"
+    },
+    {
+      "type": "regions",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "region",
+      "schema": "public",
+      "table": "location",
+      "entityType": "columns"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "boundsSw",
+      "schema": "public",
+      "table": "location",
+      "entityType": "columns"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "boundsNe",
+      "schema": "public",
+      "table": "location",
+      "entityType": "columns"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "name"
+      ],
+      "nullsNotDistinct": false,
+      "name": "location_name_unique",
+      "schema": "public",
+      "table": "location",
+      "entityType": "uniques"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "region",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "location_name_region_index",
+      "schema": "public",
+      "table": "location",
+      "entityType": "indexes"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "move",
+      "schema": "public",
+      "entityType": "tables"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "move_pkey",
+      "schema": "public",
+      "table": "move",
+      "entityType": "pks"
+    },
+    {
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "schema": "public",
+      "table": "move",
+      "entityType": "columns"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "public",
+      "table": "move",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "power",
+      "schema": "public",
+      "table": "move",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accuracy",
+      "schema": "public",
+      "table": "move",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pp",
+      "schema": "public",
+      "table": "move",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "priority",
+      "schema": "public",
+      "table": "move",
+      "entityType": "columns"
+    },
+    {
+      "type": "type",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "schema": "public",
+      "table": "move",
+      "entityType": "columns"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "name"
+      ],
+      "nullsNotDistinct": false,
+      "name": "move_name_unique",
+      "schema": "public",
+      "table": "move",
+      "entityType": "uniques"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "move_name",
+      "schema": "public",
+      "entityType": "tables"
+    },
+    {
+      "type": "language",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "language",
+      "schema": "public",
+      "table": "move_name",
+      "entityType": "columns"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "public",
+      "table": "move_name",
+      "entityType": "columns"
+    },
+    {
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "schema": "public",
+      "table": "move_name",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "move_id",
+      "schema": "public",
+      "table": "move_name",
+      "entityType": "columns"
+    },
+    {
+      "columns": [
+        "move_id",
+        "language"
+      ],
+      "nameExplicit": false,
+      "name": "move_name_move_id_language_pk",
+      "schema": "public",
+      "table": "move_name",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "nullsNotDistinct": false,
+      "name": "move_name_id_unique",
+      "schema": "public",
+      "table": "move_name",
+      "entityType": "uniques"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "move_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "move",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "move_name_move_id_move_id_fk",
+      "schema": "public",
+      "table": "move_name",
+      "entityType": "fks"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "pokemons",
+      "schema": "public",
+      "entityType": "tables"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "pokemons_pkey",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "pks"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "baseExp",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "height",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "weight",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "hp",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "atk",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "spAtk",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "def",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "spDef",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "speed",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "type",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 1,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "types",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "captureRate",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "columns"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "name"
+      ],
+      "nullsNotDistinct": false,
+      "name": "pokemons_name_unique",
+      "schema": "public",
+      "table": "pokemons",
+      "entityType": "uniques"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "pokemon_names",
+      "schema": "public",
+      "entityType": "tables"
+    },
+    {
+      "type": "language",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "language",
+      "schema": "public",
+      "table": "pokemon_names",
+      "entityType": "columns"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "public",
+      "table": "pokemon_names",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pokemon_id",
+      "schema": "public",
+      "table": "pokemon_names",
+      "entityType": "columns"
+    },
+    {
+      "columns": [
+        "pokemon_id",
+        "language"
+      ],
+      "nameExplicit": false,
+      "name": "pokemon_names_pokemon_id_language_pk",
+      "schema": "public",
+      "table": "pokemon_names",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "pokemon_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "pokemons",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "pokemon_names_pokemon_id_pokemons_id_fk",
+      "schema": "public",
+      "table": "pokemon_names",
+      "entityType": "fks"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "pokemon_moves",
+      "schema": "public",
+      "entityType": "tables"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pokemonId",
+      "schema": "public",
+      "table": "pokemon_moves",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "moveId",
+      "schema": "public",
+      "table": "pokemon_moves",
+      "entityType": "columns"
+    },
+    {
+      "type": "move_learn_method",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "learnMethod",
+      "schema": "public",
+      "table": "pokemon_moves",
+      "entityType": "columns"
+    },
+    {
+      "type": "smallint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "level",
+      "schema": "public",
+      "table": "pokemon_moves",
+      "entityType": "columns"
+    },
+    {
+      "type": "version_groups",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "version",
+      "schema": "public",
+      "table": "pokemon_moves",
+      "entityType": "columns"
+    },
+    {
+      "columns": [
+        "pokemonId",
+        "moveId"
+      ],
+      "nameExplicit": false,
+      "name": "pokemon_moves_pokemonId_moveId_pk",
+      "schema": "public",
+      "table": "pokemon_moves",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "pokemonId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "pokemons",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "pokemon_moves_pokemonId_pokemons_id_fk",
+      "schema": "public",
+      "table": "pokemon_moves",
+      "entityType": "fks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "moveId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "move",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "pokemon_moves_moveId_move_id_fk",
+      "schema": "public",
+      "table": "pokemon_moves",
+      "entityType": "fks"
+    },
+    {
+      "values": [
+        "walk",
+        "old-rod",
+        "good-rod",
+        "super-rod",
+        "surf",
+        "rock-smash",
+        "headbutt",
+        "dark-grass",
+        "grass-spots",
+        "cave-spots",
+        "bridge-spots",
+        "super-rod-spots",
+        "surf-spots",
+        "yellow-flowers",
+        "purple-flowers",
+        "red-flowers",
+        "rough-terrain",
+        "gift",
+        "gift-egg",
+        "only-one",
+        "pokeflute",
+        "headbutt-low",
+        "headbutt-normal",
+        "headbutt-high",
+        "squirt-bottle",
+        "wailmer-pail",
+        "seaweed",
+        "roaming-grass",
+        "roaming-water",
+        "devon-scope",
+        "feebas-tile-fishing",
+        "island-scan",
+        "sos-encounter",
+        "bubbling-spots",
+        "berry-piles",
+        "npc-trade",
+        "sos-from-bubbling-spot"
+      ],
+      "name": "pokemon_encounter_method",
+      "schema": "public",
+      "entityType": "enums"
+    },
+    {
+      "values": [
+        "kanto",
+        "johto",
+        "hoenn"
+      ],
+      "name": "regions",
+      "schema": "public",
+      "entityType": "enums"
+    },
+    {
+      "values": [
+        "level-up",
+        "egg",
+        "tutor",
+        "machine",
+        "stadium-surfing-pikachu",
+        "light-ball-egg",
+        "colosseum-purification",
+        "xd-shadow",
+        "xd-purification",
+        "form-change",
+        "zygarde-cube"
+      ],
+      "name": "move_learn_method",
+      "schema": "public",
+      "entityType": "enums"
+    },
+    {
+      "values": [
+        "ja-Hrkt",
+        "roomaji",
+        "ko",
+        "zh-Hant",
+        "fr",
+        "de",
+        "es",
+        "it",
+        "en",
+        "cs",
+        "ja",
+        "zh-Hans",
+        "pt-BR"
+      ],
+      "name": "language",
+      "schema": "public",
+      "entityType": "enums"
+    },
+    {
+      "values": [
+        "normal",
+        "fighting",
+        "flying",
+        "poison",
+        "ground",
+        "rock",
+        "bug",
+        "ghost",
+        "steel",
+        "fire",
+        "water",
+        "grass",
+        "electric",
+        "psychic",
+        "ice",
+        "dragon",
+        "dark",
+        "fairy",
+        "stellar",
+        "unknown"
+      ],
+      "name": "type",
+      "schema": "public",
+      "entityType": "enums"
+    },
+    {
+      "values": [
+        "red-blue",
+        "yellow",
+        "gold-silver",
+        "crystal",
+        "ruby-sapphire",
+        "emerald",
+        "firered-leafgreen",
+        "diamond-pearl",
+        "platinum",
+        "heartgold-soulsilver",
+        "black-white",
+        "colosseum",
+        "xd",
+        "black-2-white-2",
+        "x-y",
+        "omega-ruby-alpha-sapphire",
+        "sun-moon",
+        "ultra-sun-ultra-moon",
+        "lets-go-pikachu-lets-go-eevee",
+        "sword-shield",
+        "brilliant-diamond-and-shining-pearl"
+      ],
+      "name": "version_groups",
+      "schema": "public",
+      "entityType": "enums"
+    }
+  ],
+  "renames": []
+}

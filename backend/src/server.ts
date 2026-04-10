@@ -1,20 +1,25 @@
 import cors from "@elysiajs/cors"
 import Elysia from "elysia"
 import { HttpStatusCode } from "elysia-http-status-code"
+import { adminRoutes } from "./routes/admin.routes"
 import { itemRoutes } from "./routes/item.routes"
 import { locationRoutes } from "./routes/location.routes"
 import pokemonRoutes from "./routes/pokemon.routes"
 
-const app = new Elysia()
+const apiController = new Elysia({ prefix: "/api" })
+  .use(pokemonRoutes)
+  .use(locationRoutes)
+  .use(itemRoutes)
+
+export const app = new Elysia()
   .use(cors({ origin: "*" }))
   .use(HttpStatusCode())
   .onRequest(request => {
     console.log(request.request.url)
   })
   .get("/", () => "Hi")
-  .group("/api", app => app.use(pokemonRoutes))
-  .group("/api", app => app.use(locationRoutes))
-  .group("/api", app => app.use(itemRoutes))
+  .use(apiController)
+  .use(adminRoutes)
   .listen(3000)
 
 console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`)

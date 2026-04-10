@@ -1,4 +1,4 @@
-import type { ItemPlacementInsert, ItemPlacementWithRelations } from "@/types/Item"
+import type { ItemPlacementInsert, ItemPlacementWithRelations } from "@/server/types/Item"
 import { db } from "../db"
 import { itemPlacementsTable } from "../schemas/Item"
 

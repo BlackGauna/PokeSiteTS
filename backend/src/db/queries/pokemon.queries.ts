@@ -1,4 +1,4 @@
-import type { PokemonWithNamesAndMoves } from "@/types/Pokemon"
+import type { PokemonWithNamesAndMoves } from "@/server/types/Pokemon"
 import { ilike } from "drizzle-orm"
 import { status } from "elysia"
 import { db } from "../db"

@@ -1,9 +1,6 @@
 import { db } from "@/db/db"
-import {
-  itemPlacementsTable,
-  itemsTable,
-} from "@/db/schemas/Item"
-import type { ItemInsert, ItemPlacementInsert } from "@/types/Item"
+import { itemPlacementsTable, itemsTable } from "@/db/schemas/Item"
+import type { ItemInsert, ItemPlacementInsert } from "@/server/types/Item"
 import { itemLocations } from "../../../imports/itemLocations"
 import itemsJson from "../../../imports/items.json"
 
@@ -30,6 +27,5 @@ export const insertItems = async () => {
     throw error
   }
 
-  console.log("finished inserting items");
-  
+  console.log("finished inserting items")
 }

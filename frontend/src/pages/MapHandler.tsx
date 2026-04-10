@@ -42,7 +42,6 @@ import type { GroupedEncounter } from "@/types/GroupedEncounter.ts"
 import type { LocationEncounterWithPokemon } from "backend/src/db/schemas/Location.ts"
 import { CornerDownRight } from "lucide-react"
 import { useGetItemPlacements } from "../api/ItemApi.ts"
-import { locationCoords } from "../assets/locationCoords.ts"
 
 function MapHandler() {
   const { rc: contextRc, isInitialized: contextInitialized } = useContext(RasterCoordsContext)
@@ -85,27 +84,21 @@ function MapHandler() {
     const searchControl = new L.Control.Search({
       sourceData: (text: string, callback) => {
         // TODO: expand to also find by encounter pokemon names
-        const matches = Object.entries(locationCoords)
-          .filter(([key]) => {
-            const encounters = locations?.find(location => location.name === key)?.encounters
-            const names = encounters?.map(encounter => encounter.pokemon.name) || []
-
-            const hasPokemon = names.some(name => name.toLowerCase().includes(text.toLowerCase()))
-
+        const matches = (locations ?? [])
+          .filter(location => {
+            const names = location.encounters?.map(e => e.pokemon.name) ?? []
+            const hasPokemon = names.some(name =>
+              name.toLowerCase().includes(text.toLowerCase()),
+            )
             return (
-              areaRefs.current.has(key) &&
-              (key.toLowerCase().includes(text.toLowerCase()) || hasPokemon)
+              areaRefs.current.has(location.name) &&
+              (location.name.toLowerCase().includes(text.toLowerCase()) || hasPokemon)
             )
           })
-          .map(([key]) => {
-            const layer = areaRefs.current.get(key)
-
+          .map(location => {
+            const layer = areaRefs.current.get(location.name)
             if (!layer) return null
-
-            return {
-              title: key,
-              loc: layer.getBounds().getCenter(),
-            }
+            return { title: location.name, loc: layer.getBounds().getCenter() }
           })
 
         // search item placements
@@ -218,18 +211,18 @@ function MapHandler() {
 
   const generatePolygons = () => {
     const polygons = []
-    for (const [areaName, coords] of Object.entries(locationCoords)) {
-      if (coords[0][0] === 0) continue
+    for (const location of locations ?? []) {
+      if (!location.boundsSw[0]) continue
       polygons.push(
         <AreaRectangle
-          key={areaName}
-          areaName={areaName}
-          bounds={projectAreaCoords(coords)}
-          show={activeInfo === areaName}
+          key={location.name}
+          areaName={location.name}
+          bounds={projectAreaCoords([location.boundsSw, location.boundsNe])}
+          show={activeInfo === location.name}
           setActiveInfo={setActiveInfo}
           ref={el => {
             if (el) {
-              areaRefs.current.set(areaName, el)
+              areaRefs.current.set(location.name, el)
             }
           }}
         />,
@@ -419,7 +412,7 @@ function MapHandler() {
           ref={el => {
             if (el) L.DomEvent.disableClickPropagation(el as HTMLElement) // stop leaflet mouse events over the table
           }}
-          className="absolute right-0 bottom-0 z-[10000] h-[50%] w-1/3 cursor-auto border-2 border-b-0 border-solid border-green-500 bg-white/50 p-1 text-black backdrop-blur-md"
+          className="absolute right-0 bottom-0 z-10000 h-[50%] w-1/3 cursor-auto border-2 border-b-0 border-solid border-green-500 bg-white/50 p-1 text-black backdrop-blur-md"
         >
           {cachedEncounters}
         </div>

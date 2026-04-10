@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import type { LocationWithEncounters } from "../../../backend/src/db/schemas/Location"
+import type { LocationWithEncounters } from "../../../backend/src/types/Location"
 import { client } from "./client"
 
 const locationKeys = {

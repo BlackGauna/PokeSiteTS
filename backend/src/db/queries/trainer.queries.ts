@@ -4,7 +4,7 @@ import type {
   TrainerFightPokemonMoveInsert,
   TrainerInsert,
   TrainerInsertAllInfo,
-} from "@/types/Trainer"
+} from "@/server/types/Trainer"
 import { sql } from "drizzle-orm"
 import { db, type Transaction } from "../db"
 import {

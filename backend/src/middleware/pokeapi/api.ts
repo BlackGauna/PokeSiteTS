@@ -4,12 +4,12 @@ import { moveNameTable, moveTable } from "@/db/schemas/Move"
 import { pokemonNameTable, pokemonTable } from "@/db/schemas/Pokemon"
 import { pokemonMoveTable } from "@/db/schemas/PokemonMove"
 import type { NamesBase, VersionGroup } from "@/db/schemas/Shared"
-import type { MoveInsert, MoveNameInsert, PokemonMoveInsert } from "@/types/Move"
-import type { PokemonInsert, PokemonNameInsert } from "@/types/Pokemon"
+import type { MoveInsert, MoveNameInsert, PokemonMoveInsert } from "@/server/types/Move"
+import type { PokemonInsert, PokemonNameInsert } from "@/server/types/Pokemon"
 import {
   buildOnConflictUpdateColumns,
   buildOnConflictUpdateConfig,
-} from "@/utils/buildOnConflictUpdateColumns"
+} from "@/server/utils/buildOnConflictUpdateColumns"
 
 const BATCH_SIZE = 1000
 
@@ -63,7 +63,10 @@ export const insertMovesData = async (movesForDb: MoveForDb[]): Promise<void> =>
       const rows = await tx
         .insert(moveTable)
         .values(chunk)
-        .onConflictDoUpdate({ target: moveTable.name, set: buildOnConflictUpdateColumns(moveTable) })
+        .onConflictDoUpdate({
+          target: moveTable.name,
+          set: buildOnConflictUpdateColumns(moveTable),
+        })
         .returning({ id: moveTable.id, name: moveTable.name })
       inserted.push(...rows)
     }

@@ -1,8 +1,11 @@
 import { parseEncounterMethod } from "@/db/enums/EncounterMethod"
 import { insertLocationWithEncounters } from "@/db/queries/location.queries"
 import { getPokemonIdByName } from "@/db/queries/pokemon.queries"
-import type { LocationEncounterInsert, LocationInsert } from "@/types/Location"
+import type { LocationEncounterInsert, LocationInsert } from "@/server/types/Location"
 import Pokedex from "pokedex-promise-v2"
+import locationAreas from "../../../imports/overworldAreas"
+
+type LogFn = (msg: string) => void
 
 const P = new Pokedex({
   cacheLimit: 1000 * 60 * 60 * 24 * 30,
@@ -12,118 +15,109 @@ const P = new Pokedex({
 const region = "hoenn"
 const version = "emerald"
 
-export const getAndSaveLocations = async () => {
-  const locations = await getRegionLocations(region)
-  console.log("locations", locations.length)
+export const getAndSaveLocations = async (onLog?: LogFn): Promise<void> => {
+  const log: LogFn = onLog ?? (msg => console.log(msg))
 
-  const locationAreas = await Promise.all(
-    locations.map(async location => {
-      const areaInfos = await getLocationAreas(location)
-      return areaInfos
-    }),
-  ).then(locationAreas => locationAreas.flat())
+  const regionInfo = await P.getRegionByName(region)
+  log(`Fetched region: ${regionInfo.name} (${regionInfo.locations.length} locations)`)
 
-  for (const area of locationAreas) {
-    const { location, encounters } = await parseAreaDb(area)
+  const locations = await Promise.all(
+    regionInfo.locations.map(loc => P.getLocationByName(loc.name)),
+  )
 
-    await insertLocationWithEncounters(location, encounters)
+  const locationAreas_ = (await Promise.all(locations.map(loc => getLocationAreas(loc)))).flat()
+  log(`Fetched ${locationAreas_.length} location areas`)
+
+  for (const area of locationAreas_) {
+    const { location, encounters } = parseAreaDb(area)
+    const resolvedEncounters = await encounters
+    log(`Saving ${location.name} (${resolvedEncounters.length} encounters)`)
+    await insertLocationWithEncounters(location, resolvedEncounters)
   }
 
-  const townsAndCities = locations
-    .filter(loc => loc.name.includes("-city") || loc.name.includes("-town"))
-    .map(
-      (loc): LocationInsert => ({
-        name: loc.name,
-        region: "hoenn",
-        boundsSw: [0, 0],
-        boundsNe: [0, 0],
-      }),
-    )
-  for (const town of townsAndCities) {
-    await insertLocationWithEncounters(town, [])
+  // Save cities and towns that don't have separate area entries in PokeAPI
+  const townsAndCities = locations.filter(
+    loc => loc.name.includes("-city") || loc.name.includes("-town"),
+  )
+  log(`Saving ${townsAndCities.length} towns/cities...`)
+  for (const loc of townsAndCities) {
+    const townLocation = buildLocationInsert(loc.name, loc.name)
+    await insertLocationWithEncounters(townLocation, [])
+  }
+
+  log("Done saving locations")
+}
+
+const getLocationAreas = async (location: Pokedex.Location): Promise<Pokedex.LocationArea[]> =>
+  (await Promise.all(location.areas.map(area => P.getLocationAreaByName(area.name)))).flat()
+
+/** Resolve pixel bounds from overworldAreas for a given raw name (before region-stripping). */
+function resolveBounds(rawName: string): { boundsSw: number[]; boundsNe: number[] } {
+  const entry = locationAreas[rawName]
+  const sw = entry?.area[0]
+  const ne = entry?.area[1]
+  return {
+    boundsSw: sw && sw.length === 2 ? sw : [0, 0],
+    boundsNe: ne && ne.length === 2 ? ne : [0, 0],
   }
 }
 
-const getRegionLocations = async (regionName: string) => {
-  const regionInfo = await P.getRegionByName(regionName)
-  console.log("regionInfo", regionInfo.name)
-
-  if (!regionInfo) {
-    throw new Error(`Region ${regionName} not found`)
+/** Build a LocationInsert, looking up coordinates by rawName in overworldAreas. */
+function buildLocationInsert(rawName: string, dbName: string): LocationInsert {
+  return {
+    name: dbName,
+    region,
+    ...resolveBounds(rawName),
   }
-
-  const areas = await Promise.all(
-    regionInfo.locations.map(async location => {
-      const locationInfo = await P.getLocationByName(location.name)
-      return locationInfo
-    }),
-  ).then(areasArray => {
-    return areasArray.flat()
-  })
-
-  return areas
 }
 
-const getLocationAreas = async (location: Pokedex.Location) => {
-  const areaInfos = await Promise.all(
-    location.areas.map(async area => {
-      return await P.getLocationAreaByName(area.name)
-    }),
-  ).then(areaInfo => areaInfo.flat())
-
-  return areaInfos
+/** Strip region prefix/suffix to get the DB-stored name. */
+function toDbName(rawName: string): string {
+  return rawName.replace(`${region}-`, "").replace(`-${region}`, "")
 }
 
-const parseAreaDb = async (
-  areaInfo: Pokedex.LocationArea,
-): Promise<{ location: LocationInsert; encounters: LocationEncounterInsert[] }> => {
-  console.log("parsing area", areaInfo.name)
-  const encounters = await parseEncounters(areaInfo.pokemon_encounters)
+function parseAreaDb(areaInfo: Pokedex.LocationArea): {
+  location: LocationInsert
+  encounters: Promise<LocationEncounterInsert[]>
+} {
+  // Remove "-area" suffix first, then derive the DB name by stripping the region prefix.
+  // The rawName (before region-strip) matches overworldAreas keys.
+  const rawName = areaInfo.name.replace("-area", "")
+  const dbName = toDbName(rawName)
 
-  // remove "-area" at the end of area name, as in that case the area is the same as the location itself
-  const areaName = areaInfo.name
-    .replace("-area", "")
-    .replace(`${region}-`, "")
-    .replace(`-${region}`, "")
-
-  const location: LocationInsert = {
-    name: areaName,
-    region: region,
-    boundsSw: [0, 0],
-    boundsNe: [0, 0],
-  }
+  const location = buildLocationInsert(rawName, dbName)
+  const encounters = parseEncounters(areaInfo.pokemon_encounters)
 
   return { location, encounters }
 }
 
-const parseEncounters = async (encounters: Pokedex.LocationAreaPokemonEncounter[]) => {
-  const parsedEncounters: LocationEncounterInsert[] = []
+const parseEncounters = async (
+  encounters: Pokedex.LocationAreaPokemonEncounter[],
+): Promise<LocationEncounterInsert[]> => {
+  const parsed: LocationEncounterInsert[] = []
 
   for (const encounter of encounters) {
-    const pokemonName = encounter.pokemon.name
-    const filteredVersionDetails = encounter.version_details.filter(
-      detail => detail.version.name.toLowerCase() === version.toLowerCase(),
+    const emeraldDetails = encounter.version_details.filter(
+      d => d.version.name.toLowerCase() === version,
     )
+    if (emeraldDetails.length === 0) continue
 
-    if (filteredVersionDetails.length < 1) continue
+    const pokemonId = await getPokemonIdByName(encounter.pokemon.name)
 
-    const pokemonId = await getPokemonIdByName(pokemonName)
-    for (const encounterDetail of filteredVersionDetails.flatMap(v => v.encounter_details)) {
-      const method = parseEncounterMethod(encounterDetail.method.name)
-      if (!method)
-        throw new Error(`Could not parse ${method} to pokemon encounter method of ${pokemonName}`)
+    for (const detail of emeraldDetails.flatMap(v => v.encounter_details)) {
+      const method = parseEncounterMethod(detail.method.name)
+      if (!method) throw new Error(`Unknown encounter method "${detail.method.name}"`)
 
-      const locationEncounter: LocationEncounterInsert = {
-        pokemonId: pokemonId,
-        locationId: 0, // will be updated when location is saved to db
-        encounterChance: encounterDetail.chance,
-        minLevel: encounterDetail.min_level,
-        maxLevel: encounterDetail.max_level,
+      parsed.push({
+        pokemonId,
+        locationId: 0, // filled by insertLocationWithEncounters
+        encounterChance: detail.chance,
+        minLevel: detail.min_level,
+        maxLevel: detail.max_level,
         encounterMethod: method,
-      }
-      parsedEncounters.push(locationEncounter)
+      })
     }
   }
 
-  return parsedEncounters
+  return parsed
 }

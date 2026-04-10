@@ -1,6 +1,10 @@
 import { db, type Transaction } from "@/db/db"
 import { locationEncounterTable, locationTable } from "@/db/schemas/Location"
-import type { LocationEncounterInsert, LocationInsert, LocationWithEncounters } from "@/types/Location"
+import type {
+  LocationEncounterInsert,
+  LocationInsert,
+  LocationWithEncounters,
+} from "@/server/types/Location"
 import { ilike } from "drizzle-orm"
 import type { Region } from "../enums/Region"
 
@@ -81,7 +85,7 @@ const insertLocationData = async (tx: Transaction, location: LocationInsert) => 
     .values(location)
     .onConflictDoUpdate({
       target: [locationTable.name, locationTable.region],
-      set: { name: location.name },
+      set: { boundsSw: location.boundsSw, boundsNe: location.boundsNe },
     })
     .returning({ id: locationTable.id })
 

@@ -4,7 +4,11 @@ import { getAllMoveIdsAndNames, getPokemonMoves } from "@/db/queries/move.querie
 import { getAllPokemonIdsAndNames } from "@/db/queries/pokemon.queries"
 import { saveTrainersAndFights } from "@/db/queries/trainer.queries"
 
-import type { TrainerFightInsertAllInfo, TrainerFightPokemonInsertWithMoves, TrainerInsertAllInfo } from "@/types/Trainer"
+import type {
+  TrainerFightInsertAllInfo,
+  TrainerFightPokemonInsertWithMoves,
+  TrainerInsertAllInfo,
+} from "@/server/types/Trainer"
 import { fuzzy } from "fast-fuzzy"
 import { trainerPokemon } from "../../../imports/trainer-pokemon"
 import { trainers as trainersRaw } from "../../../imports/trainers"

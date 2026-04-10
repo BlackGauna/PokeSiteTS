@@ -1,7 +1,7 @@
 import type { LearnMethod } from "@/db/enums/MoveLearnMethod"
 import { VersionGroup } from "@/db/schemas/Shared"
-import type { MoveInsert } from "@/types/Move"
-import type { PokemonInsert, PokemonNameInsert } from "@/types/Pokemon"
+import type { MoveInsert } from "@/server/types/Move"
+import type { PokemonInsert, PokemonNameInsert } from "@/server/types/Pokemon"
 import Pokedex from "pokedex-promise-v2"
 import { type MoveForDb, insertAllPokemonData, insertMovesData } from "./api"
 import { findEnglishName, generateNamesArray, generateStats, generateTypes } from "./pokeApi2db"
@@ -11,31 +11,40 @@ type PokemonApi = {
   species: Pokedex.PokemonSpecies
 }
 
+type LogFn = (msg: string) => void
+
 const P = new Pokedex({
   cacheLimit: 1000 * 60 * 60 * 24 * 30,
   timeout: 1000 * 30,
 })
 
-export const preparePokemonAndMoves = async (id: number, end?: number): Promise<void> => {
-  const pokemonAndSpeciesData = await getPokemonsFromApi(id, end)
-  await insertPokemonToDb(pokemonAndSpeciesData)
+export const preparePokemonAndMoves = async (
+  id: number,
+  end?: number,
+  onLog?: LogFn,
+): Promise<void> => {
+  const log: LogFn = onLog ?? (msg => console.log(msg))
+
+  const pokemonAndSpeciesData = await getPokemonsFromApi(id, end, log)
+  await insertPokemonToDb(pokemonAndSpeciesData, log)
 
   const movesToSave = createMovesArray(pokemonAndSpeciesData)
-  console.log(`Found ${movesToSave.length} moves in pokemon data`)
+  log(`Found ${movesToSave.length} unique moves in pokemon data`)
 
-  const movesForDb = await getMovesFromApi(movesToSave)
-  console.log(`Fetched ${movesForDb.length} move details from PokeAPI`)
+  const movesForDb = await getMovesFromApi(movesToSave, log)
+  log(`Fetched ${movesForDb.length} move details from PokeAPI`)
 
   await insertMovesData(movesForDb)
+  log("Moves saved to database")
 }
 
-async function getPokemonsFromApi(id: number, end?: number): Promise<PokemonApi[]> {
+async function getPokemonsFromApi(id: number, end?: number, log?: LogFn): Promise<PokemonApi[]> {
   const endValue = end ?? id
   const ids = Array.from({ length: endValue - id + 1 }, (_, i) => i + id)
   try {
-    const pokedex = await Promise.all(ids.map(getPokemonFromApi))
+    const pokedex = await Promise.all(ids.map(i => getPokemonFromApi(i, log)))
     pokedex.sort((a, b) => a.pokemon.id - b.pokemon.id)
-    console.info(`Fetched ${pokedex.length} pokemon from PokeAPI`)
+    log?.(`Fetched ${pokedex.length} pokemon from PokeAPI`)
     return pokedex
   } catch (error) {
     console.error("Failed to fetch pokemon from PokeAPI:", error)
@@ -43,9 +52,9 @@ async function getPokemonsFromApi(id: number, end?: number): Promise<PokemonApi[
   }
 }
 
-const getPokemonFromApi = async (id: number): Promise<PokemonApi> => {
+const getPokemonFromApi = async (id: number, log?: LogFn): Promise<PokemonApi> => {
   try {
-    console.info(`Fetching pokemon ${id}...`)
+    log?.(`Fetching pokemon #${id}...`)
     const pokemon = await P.getPokemonByName(id)
     const species = await P.getPokemonSpeciesByName(pokemon.species.name)
     return { pokemon, species }
@@ -54,7 +63,7 @@ const getPokemonFromApi = async (id: number): Promise<PokemonApi> => {
   }
 }
 
-const insertPokemonToDb = async (allPokemonData: PokemonApi[]): Promise<void> => {
+const insertPokemonToDb = async (allPokemonData: PokemonApi[], log?: LogFn): Promise<void> => {
   const pokemons: PokemonInsert[] = []
   const allNames: PokemonNameInsert[] = []
 
@@ -74,8 +83,9 @@ const insertPokemonToDb = async (allPokemonData: PokemonApi[]): Promise<void> =>
     names.forEach(n => allNames.push({ ...n, pokemonId: p.id }))
   }
 
-  console.log(`Saving ${pokemons.length} pokemon to db`)
+  log?.(`Saving ${pokemons.length} pokemon to database...`)
   await insertAllPokemonData(pokemons, allNames)
+  log?.(`Saved ${pokemons.length} pokemon`)
 }
 
 // slightly modified type for initial construction with only the move name known
@@ -102,7 +112,11 @@ const createMovesArray = (allPokemonData: PokemonApi[]): MoveFromApi[] => {
           const index =
             existingIndex > -1
               ? existingIndex
-              : movesFromApi.push({ move: { name: moveElement.move.name }, pokemonLearnData: [], moveNames: [] }) - 1
+              : movesFromApi.push({
+                  move: { name: moveElement.move.name },
+                  pokemonLearnData: [],
+                  moveNames: [],
+                }) - 1
 
           movesFromApi[index]!.pokemonLearnData.push({
             pokemonId: pokemonApi.pokemon.id,
@@ -118,8 +132,10 @@ const createMovesArray = (allPokemonData: PokemonApi[]): MoveFromApi[] => {
   return movesFromApi
 }
 
-const getMovesFromApi = async (moves: MoveFromApi[]): Promise<MoveForDb[]> =>
-  Promise.all(moves.map(getMoveFromApi))
+const getMovesFromApi = async (moves: MoveFromApi[], log?: LogFn): Promise<MoveForDb[]> => {
+  log?.(`Fetching details for ${moves.length} unique moves...`)
+  return Promise.all(moves.map(getMoveFromApi))
+}
 
 const getMoveFromApi = async (entry: MoveFromApi): Promise<MoveForDb> => {
   const moveInfo = await P.getMoveByName(entry.move.name)

@@ -4,7 +4,7 @@ import {
   type Item,
   type ItemPlacementInsert,
   type ItemPlacementWithItem,
-} from "@/types/Item"
+} from "@/server/types/Item"
 
 import Elysia from "elysia"
 

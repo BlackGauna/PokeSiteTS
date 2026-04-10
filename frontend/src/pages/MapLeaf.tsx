@@ -3,15 +3,12 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { useEffect, useRef } from "react"
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-import { treaty } from "@elysiajs/eden"
+import { client } from "@/api/client"
+import type { Pokemon } from "@/server/types/Pokemon"
 import { useQueryClient } from "@tanstack/react-query"
 import "leaflet-rastercoords"
-import type { Pokemon } from "../../../backend/src/db/schemas/Pokemon"
-import type { App } from "../../../backend/src/server"
 import * as overworldItems from "../assets/OverworldItems.json"
 import "../utils/leaflet-zoom"
-
-const client = treaty<App>(import.meta.env.VITE_SERVER_URL)
 
 // Custom hook for fetching data
 const fetchItemData = async (): Promise<Pokemon> => {
@@ -26,8 +23,8 @@ function MapLeaf() {
   const queryClient = useQueryClient()
 
   const mapContainer = useRef<HTMLDivElement>(null)
-  const map = useRef<L.Map>()
-  const rc = useRef<L.RasterCoords>()
+  const map = useRef<L.Map | undefined>(undefined)
+  const rc = useRef<L.RasterCoords | undefined>(undefined)
 
   const [imageWidth, imageHeight] = [13024, 6352]
 
