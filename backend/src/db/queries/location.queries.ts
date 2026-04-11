@@ -1,31 +1,59 @@
 import { db, type Transaction } from "@/db/db"
 import { locationEncounterTable, locationTable } from "@/db/schemas/Location"
+import { pokemonTable } from "@/db/schemas/Pokemon"
 import type {
+  Location,
   LocationEncounterInsert,
   LocationInsert,
-  LocationWithEncounters,
+  LocationSearchEntry,
 } from "@/server/types/Location"
-import { ilike } from "drizzle-orm"
+import { eq, ilike } from "drizzle-orm"
 import type { Region } from "../enums/Region"
 
-export const getRegionLocations = async (regionEnum: Region): Promise<LocationWithEncounters[]> => {
+export const getRegionLocations = async (regionEnum: Region): Promise<Location[]> => {
   try {
-    const locations = await db.query.locationTable.findMany({
-      where: { region: regionEnum },
-      with: {
-        encounters: {
-          with: {
-            pokemon: true,
-          },
-        },
-      },
-    })
+    const locations = await db
+      .select({
+        id: locationTable.id,
+        name: locationTable.name,
+        region: locationTable.region,
+        boundsSw: locationTable.boundsSw,
+        boundsNe: locationTable.boundsNe,
+      })
+      .from(locationTable)
+      .where(eq(locationTable.region, regionEnum))
 
-    return locations as unknown as LocationWithEncounters[]
+    return locations
   } catch (error) {
     console.error("Error fetching region locations:", error)
     throw error
   }
+}
+
+export const getRegionLocationSearchIndex = async (
+  regionEnum: Region,
+): Promise<LocationSearchEntry[]> => {
+  const rows = await db
+    .selectDistinct({
+      locationName: locationTable.name,
+      pokemonName: pokemonTable.name,
+    })
+    .from(locationTable)
+    .innerJoin(locationEncounterTable, eq(locationEncounterTable.locationId, locationTable.id))
+    .innerJoin(pokemonTable, eq(pokemonTable.id, locationEncounterTable.pokemonId))
+    .where(eq(locationTable.region, regionEnum))
+
+  const map = new Map<string, string[]>()
+  for (const row of rows) {
+    const existing = map.get(row.locationName)
+    if (existing) {
+      existing.push(row.pokemonName)
+    } else {
+      map.set(row.locationName, [row.pokemonName])
+    }
+  }
+
+  return Array.from(map.entries()).map(([name, pokemonNames]) => ({ name, pokemonNames }))
 }
 
 export const getLocation = async (locationName: string) => {

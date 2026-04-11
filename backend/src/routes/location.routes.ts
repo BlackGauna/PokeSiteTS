@@ -1,6 +1,9 @@
 import { parseRegion } from "@/db/enums/Region"
-import { getLocation, getRegionLocations } from "@/db/queries/location.queries"
-import type { LocationWithEncounters } from "@/server/types/Location"
+import {
+  getLocation,
+  getRegionLocationSearchIndex,
+  getRegionLocations,
+} from "@/db/queries/location.queries"
 import Elysia, { status, t } from "elysia"
 import { HttpStatusEnum } from "elysia-http-status-code/status"
 
@@ -15,6 +18,15 @@ export const locationRoutes = new Elysia({ prefix: "locations" })
       name: t.String(),
     }),
   })
+  .get(
+    "/region/:name/search-index",
+    async ({ params: { name } }) => await getRegionSearchIndexRoute(name),
+    {
+      params: t.Object({
+        name: t.String(),
+      }),
+    },
+  )
 
 const getLocationRoute = async (locationName: string) => {
   const location = await getLocation(locationName)
@@ -30,11 +42,15 @@ const getRegionLocationsRoute = async (regionName: string) => {
     return status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "Region name is not valid")
   }
 
-  const region = await getRegionLocations(regionEnum)
+  const locations = await getRegionLocations(regionEnum)
+  return locations
+}
 
-  if (!region) {
-    return status(HttpStatusEnum.HTTP_404_NOT_FOUND, "Region not found")
+const getRegionSearchIndexRoute = async (regionName: string) => {
+  const regionEnum = parseRegion(regionName)
+  if (!regionEnum) {
+    return status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "Region name is not valid")
   }
 
-  return region as unknown as LocationWithEncounters[]
+  return await getRegionLocationSearchIndex(regionEnum)
 }

@@ -88,8 +88,8 @@ function groupEncounters(encounters: LocationEncounterWithPokemon[]): GroupedEnc
 }
 
 type EncounterTableProps = {
-  activeInfo: string | null
-  locations: LocationWithEncounters[] | undefined
+  activeInfo: string
+  location: LocationWithEncounters | undefined
 }
 
 // Separate inner component so that `key={activeInfo}` on it (set by the outer component)
@@ -214,9 +214,7 @@ function EncounterTableContent({ locationName, encounters }: ContentProps) {
   )
 }
 
-export default function EncounterTable({ activeInfo, locations }: EncounterTableProps) {
-  const location = activeInfo && locations ? locations.find(l => l.name === activeInfo) : undefined
-
+export default function EncounterTable({ activeInfo, location }: EncounterTableProps) {
   // Pre-sort by method then chance descending so the initial view is ordered
   // without needing TanStack's controlled sorting state at startup.
   const encounters = useMemo(
@@ -232,7 +230,7 @@ export default function EncounterTable({ activeInfo, locations }: EncounterTable
     [location],
   )
 
-  if (!activeInfo || !location) return null
+  if (!location) return null
 
   return (
     // key here makes EncounterTableContent fully remount on location change,

@@ -18,6 +18,8 @@ export const locationWithEncountersSchema = Type.Composite([
   Type.Object({ encounters: Type.Array(locationEncounterWithPokemonSchema) }),
 ])
 
+export type LocationSearchEntry = { name: string; pokemonNames: string[] }
+
 export type Location = Static<typeof locationSchema>
 export type LocationInsert = Static<typeof locationInsertSchema>
 export type LocationEncounter = Static<typeof locationEncounterSchema>

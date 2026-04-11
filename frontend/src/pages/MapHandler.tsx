@@ -16,7 +16,7 @@ import {
   useMapEvents,
 } from "react-leaflet"
 
-import { useGetRegionLocations } from "../api/LocationApi.ts"
+import { useGetLocation, useGetRegionLocations, useGetRegionSearchIndex } from "../api/LocationApi.ts"
 import AreaRectangle from "../components/AreaRectangle.tsx"
 import { RasterCoordsContext } from "../components/RasterCoordsProvider.tsx"
 import itemStyles from "../styles/itemMarker.module.css"
@@ -48,19 +48,30 @@ function MapHandler() {
   })
 
   const { data: locations } = useGetRegionLocations("hoenn")
+  const { data: searchIndex } = useGetRegionSearchIndex("hoenn")
+  const { data: activeLocation } = useGetLocation(activeInfo)
   const { data: itemPlacements } = useGetItemPlacements()
+
+  const searchIndexMap = useMemo(() => {
+    const map = new Map<string, string[]>()
+    for (const entry of searchIndex ?? []) {
+      map.set(entry.name, entry.pokemonNames)
+    }
+    return map
+  }, [searchIndex])
 
   // Add search control over locations (by name or encounter pokemon) and item placements
   useEffect(() => {
     const searchControl = new L.Control.Search({
       sourceData: (text: string, callback) => {
+        const lowerText = text.toLowerCase()
         const matches = (locations ?? [])
           .filter(location => {
-            const names = location.encounters?.map(e => e.pokemon.name) ?? []
-            const hasPokemon = names.some(name => name.toLowerCase().includes(text.toLowerCase()))
+            const pokemonNames = searchIndexMap.get(location.name) ?? []
+            const hasPokemon = pokemonNames.some(name => name.toLowerCase().includes(lowerText))
             return (
               areaRefs.current.has(location.name) &&
-              (location.name.toLowerCase().includes(text.toLowerCase()) || hasPokemon)
+              (location.name.toLowerCase().includes(lowerText) || hasPokemon)
             )
           })
           .map(location => {
@@ -112,7 +123,7 @@ function MapHandler() {
     return () => {
       map.removeControl(searchControl as unknown as L.Control)
     }
-  }, [map, locations, itemPlacements])
+  }, [map, locations, searchIndexMap, itemPlacements])
 
   const coordsToLatlng = useCallback(
     (coords: [number, number] | [number, number, number] | number[]) => {
@@ -207,7 +218,7 @@ function MapHandler() {
           }}
           className="bg-background border-border absolute top-0 right-0 z-1000 h-full w-1/3 min-w-93.75 border-t border-l p-1"
         >
-          <EncounterTable activeInfo={activeInfo} locations={locations} />
+          <EncounterTable activeInfo={activeInfo} location={activeLocation} />
         </div>
       )}
       {formPosition && (
