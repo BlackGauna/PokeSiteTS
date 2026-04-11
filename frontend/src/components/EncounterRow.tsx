@@ -3,6 +3,7 @@ import { CornerDownRight } from "lucide-react"
 import { TableCell, TableRow } from "@/components/ui/table.tsx"
 import { cn } from "@/lib/utils.ts"
 import type { GroupedEncounter } from "@/types/GroupedEncounter.ts"
+import { memo } from "react"
 
 const TYPE_COLORS: Record<string, string> = {
   normal: "bg-stone-400",
@@ -42,7 +43,7 @@ type EncounterRowProps = {
   onToggle: () => void
 }
 
-function EncounterRow({ enc, rowKey, index, isOpen, onToggle }: EncounterRowProps) {
+const EncounterRow = memo(({ enc, rowKey, index, isOpen, onToggle }: EncounterRowProps) => {
   const primaryType = enc.pokemon.types[0]
 
   return (
@@ -84,7 +85,7 @@ function EncounterRow({ enc, rowKey, index, isOpen, onToggle }: EncounterRowProp
         enc.encounters.map((subEnc, i) => (
           <TableRow
             key={`${rowKey}_${index}_sub_${i}`}
-            className="bg-muted/40 col-span-full ml-2 grid w-full grid-cols-subgrid overflow-hidden rounded-xl border-0"
+            className="bg-muted/40 text-card-foreground col-span-full ml-2 grid w-full grid-cols-subgrid overflow-hidden rounded-xl border-0"
           >
             <TableCell className="py-1.5 pl-3">
               <div className="flex items-center gap-1">
@@ -110,6 +111,6 @@ function EncounterRow({ enc, rowKey, index, isOpen, onToggle }: EncounterRowProp
         ))}
     </>
   )
-}
+})
 
 export default EncounterRow

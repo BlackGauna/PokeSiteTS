@@ -31,8 +31,8 @@ function MapHandler() {
   const [mapZoom, setMapZoom] = useState(1)
   const [activeInfo, setActiveInfo] = useState<string | null>(null)
   const [formPosition, setFormPosition] = useState<L.LatLng | null>(null)
-  const [mousePosition, setMousePosition] = useState<L.LatLng | null>(null)
 
+  const mouseRef = useRef<L.LatLng | null>(null)
   const itemPopupRef = useRef<L.Popup | null>(L.popup())
   const areaRefs = useRef<Map<string, L.Rectangle>>(new Map())
   const itemRefs = useRef<Map<number, L.Marker>>(new Map())
@@ -189,10 +189,10 @@ function MapHandler() {
   useMapEvents({
     keypress(e) {
       if (e.originalEvent.key !== "a" || itemPopupRef.current?.isOpen()) return
-      setFormPosition(mousePosition)
+      setFormPosition(mouseRef.current)
     },
     mousemove: e => {
-      setMousePosition(e.latlng)
+      mouseRef.current = e.latlng
     },
   })
 
@@ -205,7 +205,7 @@ function MapHandler() {
           ref={el => {
             if (el) L.DomEvent.disableClickPropagation(el as HTMLElement)
           }}
-          className="bg-background border-border absolute top-0 right-0 z-10000 h-full w-1/3 min-w-93.75 cursor-auto border-t border-l border-solid p-1 text-black backdrop-blur-md"
+          className="bg-background border-border absolute top-0 right-0 z-1000 h-full w-1/3 min-w-93.75 border-t border-l p-1"
         >
           <EncounterTable activeInfo={activeInfo} locations={locations} />
         </div>

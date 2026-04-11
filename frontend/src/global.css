@@ -137,6 +137,9 @@
   background-color: var(--map-background);
   color: var(--foreground);
 }
+.leaflet-container:focus {
+  outline: none !important;
+}
 
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
