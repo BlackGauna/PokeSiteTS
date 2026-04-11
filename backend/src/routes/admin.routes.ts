@@ -1,5 +1,6 @@
 import { getAllPokemonIdsAndNames } from "@/db/queries/pokemon.queries"
 import { preparePokemonAndMoves } from "@/server/middleware/pokeapi/FillPokedex"
+import { insertItems } from "@/server/middleware/pokeapi/ItemsHelper"
 import { getAndSaveLocations } from "@/server/middleware/pokeapi/LocationHelper"
 import Elysia from "elysia"
 
@@ -36,4 +37,13 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
     set.headers["Content-Type"] = "text/plain; charset=utf-8"
     set.headers["Cache-Control"] = "no-cache"
     return makeStream(send => getAndSaveLocations(send))
+  })
+  .post("/setup/items", ({ set }) => {
+    set.headers["Content-Type"] = "text/plain; charset=utf-8"
+    set.headers["Cache-Control"] = "no-cache"
+    return makeStream(async send => {
+      send("Inserting items and item placements…")
+      await insertItems()
+      send("Items inserted successfully.")
+    })
   })

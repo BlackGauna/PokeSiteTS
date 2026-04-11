@@ -1,5 +1,5 @@
 import L from "leaflet"
-import { forwardRef, useEffect, useState } from "react"
+import { forwardRef, useMemo } from "react"
 import { Rectangle } from "react-leaflet"
 
 const AreaRectangle = forwardRef(function AreaRectangle(
@@ -16,26 +16,20 @@ const AreaRectangle = forwardRef(function AreaRectangle(
   },
   ref: React.Ref<L.Rectangle>,
 ) {
-  const [opacity, setOpacity] = useState(0)
-
-  useEffect(() => {
-    setOpacity(show ? 1 : 0)
-  }, [show])
+  const pathOptions = useMemo(
+    () => ({ color: "white", opacity: show ? 1 : 0, fillOpacity: 0, dashArray: "4 8" }),
+    [show],
+  )
 
   return (
     <Rectangle
-      key={areaName + opacity.toString()} // add opacity, so React knows to update element after it changes
       bounds={bounds}
-      color="white"
-      opacity={opacity}
-      fillOpacity={0}
-      dashArray={[4, 8]}
+      pathOptions={pathOptions}
       ref={ref}
       eventHandlers={{
         click: e => {
-          L.DomEvent.stopPropagation(e) // stops click event passing to parent map/layer
+          L.DomEvent.stopPropagation(e)
           setActiveInfo(areaName)
-          // if (!show) map.fitBounds(bounds, { maxZoom: 6 })
         },
       }}
     />

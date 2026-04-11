@@ -1,5 +1,5 @@
+import type { PokemonWithNamesAndMoves } from "@/server/types/Pokemon"
 import { QueryClient, type QueryFunctionContext, useQuery } from "@tanstack/react-query"
-import type { PokemonWithNamesAndMoves } from "../../../backend/src/db/schemas/Pokemon"
 import { client } from "./client"
 
 const pokemonKeys = {

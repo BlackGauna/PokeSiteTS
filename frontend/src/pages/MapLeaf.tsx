@@ -1,12 +1,11 @@
 // type Props = {}
-import L from "leaflet"
-import "leaflet/dist/leaflet.css"
-import { useEffect, useRef } from "react"
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 import { client } from "@/api/client"
 import type { Pokemon } from "@/server/types/Pokemon"
 import { useQueryClient } from "@tanstack/react-query"
+import L from "leaflet"
 import "leaflet-rastercoords"
+import "leaflet/dist/leaflet.css"
+import { useEffect, useRef } from "react"
 import * as overworldItems from "../assets/OverworldItems.json"
 import "../utils/leaflet-zoom"
 

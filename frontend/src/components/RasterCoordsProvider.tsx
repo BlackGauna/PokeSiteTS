@@ -13,35 +13,35 @@ export type RasterCoordsHandle = {
   isInitialized: boolean
 }
 
+function extendBounds(bounds: L.LatLngBounds, buffer: number): L.LatLngBounds {
+  const sw = bounds.getSouthWest()
+  const ne = bounds.getNorthEast()
+  return L.latLngBounds(
+    L.latLng(sw.lat - buffer, sw.lng - buffer),
+    L.latLng(ne.lat + buffer, ne.lng + buffer),
+  )
+}
+
 const RasterCoordsProvider = ({
-  center,
   initialZoom,
   children,
   maxZoom,
 }: {
-  center: number[]
   initialZoom: number
   children?: ReactNode
   maxZoom: number
 }) => {
   const rcRef = useRef<L.RasterCoords | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
-  // const mapRef = useRef<L.Map | null>(null)
   const [imageWidth, imageHeight] = [13024, 6352]
 
   const path = "tiles/{z}/{x}/{y}.png"
 
-  // const [rc, setRc] = useState<L.RasterCoords | null>(null)
-
   const map = useMap()
   useEffect(() => {
-    // console.log("load")
-    // console.log("after ref")
     if (!map) return
-    // console.log("test")
 
     const newRc = new L.RasterCoords(map, [imageWidth, imageHeight])
-    // setRc(newRc)
     rcRef.current = newRc
     setIsInitialized(true)
 
@@ -49,7 +49,6 @@ const RasterCoordsProvider = ({
     map.setMaxBounds(bounds)
     map.setView(bounds.getCenter(), initialZoom)
     map.setMinZoom(map.getBoundsZoom(newRc.getMaxBounds()))
-    // map.setMinZoom(1)
 
     L.tileLayer(path, {
       className: "z-0",
@@ -64,25 +63,15 @@ const RasterCoordsProvider = ({
       maxZoom: maxZoom,
       attribution: "Onur",
     }).addTo(map)
-  }, [imageWidth, imageHeight, map, center, initialZoom])
+  }, [map, initialZoom])
 
   const contextProviderValue = useMemo(
     () => ({
       rc: rcRef.current,
       isInitialized: isInitialized,
     }),
-    [isInitialized, rcRef],
+    [isInitialized],
   )
-
-  const extendBounds = (bounds: L.LatLngBounds, buffer: number) => {
-    const sw = bounds.getSouthWest()
-    const ne = bounds.getNorthEast()
-
-    const newSw = L.latLng(sw.lat - buffer, sw.lng - buffer)
-    const newNe = L.latLng(ne.lat + buffer, ne.lng + buffer)
-
-    return L.latLngBounds(newSw, newNe)
-  }
 
   return (
     <RasterCoordsContext.Provider value={contextProviderValue}>

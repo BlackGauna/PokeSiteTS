@@ -1,10 +1,7 @@
 import { queryClient } from "@/main"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import type {
-  Item,
-  ItemPlacementInsert,
-  ItemPlacementWithRelations,
-} from "../../../backend/src/db/schemas/Item"
+
+import type { Item, ItemPlacementInsert, ItemPlacementWithRelations } from "@/server/types/Item"
 import { client } from "./client"
 
 const itemKeys = {

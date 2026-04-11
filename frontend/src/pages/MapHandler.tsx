@@ -19,77 +19,45 @@ import {
 import { useGetRegionLocations } from "../api/LocationApi.ts"
 import AreaRectangle from "../components/AreaRectangle.tsx"
 import { RasterCoordsContext } from "../components/RasterCoordsProvider.tsx"
-import { ScrollArea } from "../components/ui/scroll-area.tsx"
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table.tsx"
 import itemStyles from "../styles/itemMarker.module.css"
 import "../styles/leaflet-search.css"
 
+import EncounterTable from "@/components/EncounterTable.tsx"
 import { ItemForm } from "@/components/ItemForm.tsx"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible.tsx"
-import type { GroupedEncounter } from "@/types/GroupedEncounter.ts"
-import type { LocationEncounterWithPokemon } from "backend/src/db/schemas/Location.ts"
-import { CornerDownRight } from "lucide-react"
 import { useGetItemPlacements } from "../api/ItemApi.ts"
 
 function MapHandler() {
-  const { rc: contextRc, isInitialized: contextInitialized } = useContext(RasterCoordsContext)
-  const [rc, setRc] = useState<L.RasterCoords | null>(null)
-  const [isInitialized, setisInitialized] = useState(contextInitialized)
+  const { rc, isInitialized } = useContext(RasterCoordsContext)
   const [mapZoom, setMapZoom] = useState(1)
   const [activeInfo, setActiveInfo] = useState<string | null>(null)
   const [formPosition, setFormPosition] = useState<L.LatLng | null>(null)
   const [mousePosition, setMousePosition] = useState<L.LatLng | null>(null)
 
   const itemPopupRef = useRef<L.Popup | null>(L.popup())
+  const areaRefs = useRef<Map<string, L.Rectangle>>(new Map())
+  const itemRefs = useRef<Map<number, L.Marker>>(new Map())
 
   const map = useMap()
-  map.on("zoomend", () => {
-    const zoomLevel = map.getZoom()
-    setMapZoom(zoomLevel)
-  })
 
-  // clear the active area, i.e. the catchable pokemon shown when clicking on empty area
   useMapEvent("click", () => {
     setActiveInfo(null)
   })
 
-  const items = useRef<L.LayerGroup | null>(null)
-  const areaRefs = useRef<Map<string, L.Rectangle>>(new Map())
-  const itemRefs = useRef<Map<number, L.Marker>>(new Map())
+  useMapEvent("zoomend", () => {
+    setMapZoom(map.getZoom())
+  })
 
   const { data: locations } = useGetRegionLocations("hoenn")
   const { data: itemPlacements } = useGetItemPlacements()
 
-  useEffect(() => {
-    if (contextRc && contextInitialized) {
-      setRc(contextRc)
-      setisInitialized(contextInitialized)
-    }
-  }, [contextRc, contextInitialized])
-
-  //... adding search in items layer containing item markers, to make them searchable
+  // Add search control over locations (by name or encounter pokemon) and item placements
   useEffect(() => {
     const searchControl = new L.Control.Search({
       sourceData: (text: string, callback) => {
-        // TODO: expand to also find by encounter pokemon names
         const matches = (locations ?? [])
           .filter(location => {
             const names = location.encounters?.map(e => e.pokemon.name) ?? []
-            const hasPokemon = names.some(name =>
-              name.toLowerCase().includes(text.toLowerCase()),
-            )
+            const hasPokemon = names.some(name => name.toLowerCase().includes(text.toLowerCase()))
             return (
               areaRefs.current.has(location.name) &&
               (location.name.toLowerCase().includes(text.toLowerCase()) || hasPokemon)
@@ -101,32 +69,26 @@ function MapHandler() {
             return { title: location.name, loc: layer.getBounds().getCenter() }
           })
 
-        // search item placements
         if (itemPlacements) {
           itemPlacements
-            ?.filter(itemPlacement =>
+            .filter(itemPlacement =>
               itemPlacement.item.name.toLowerCase().includes(text.toLowerCase()),
             )
             .forEach(itemPlacement => {
               const marker = itemRefs.current.get(itemPlacement.id)
-              if (!marker) return null
-              const match = {
+              if (!marker) return
+              matches.push({
                 title: `${itemPlacement.item.name} (${itemPlacement.location.name})`,
                 loc: marker.getLatLng() as L.LatLng,
-              }
-              matches.push(match)
+              })
             })
         }
         return callback(matches)
       },
-      // for showing the search results, when searching for a pokemon
-      // otherwise, it will show no previews, because the pokemon name is not the title of the area
-      filterData: (_text: string, records: object) => {
-        return records
-      },
+      // Show all results including those matched by pokemon name, not just by location title
+      filterData: (_text: string, records: object) => records,
 
       initial: false,
-
       delayType: 200,
       autoType: false,
 
@@ -137,10 +99,7 @@ function MapHandler() {
 
         let itemFound = false
         itemRefs.current.forEach(marker => {
-          const test = marker.getLatLng()
-          // need to compare the string represenation, because of float imprecision (I guess)
-          if (test.toString() !== latlng.toString()) return
-
+          if (marker.getLatLng().toString() !== latlng.toString()) return
           itemFound = true
           marker.openPopup()
         })
@@ -149,71 +108,65 @@ function MapHandler() {
       },
     })
 
-    map.addControl(searchControl)
-
+    map.addControl(searchControl as unknown as L.Control)
     return () => {
-      map.removeControl(searchControl)
+      map.removeControl(searchControl as unknown as L.Control)
     }
-  }, [map, areaRefs, locations, itemPlacements])
-
-  const projectAreaCoords = (coords: number[][] | [number[], number[]]) => {
-    if (!rc) return latLngBounds([0, 0], [0, 0])
-    const projected = latLngBounds([
-      rc.unproject(coords[0] as L.PointExpression),
-      rc.unproject(coords[1] as L.PointExpression),
-    ])
-    return projected
-  }
+  }, [map, locations, itemPlacements])
 
   const coordsToLatlng = useCallback(
     (coords: [number, number] | [number, number, number] | number[]) => {
       if (!rc) return latLng(0, 0)
-      const projected = rc!.unproject(coords as L.PointExpression)
-
-      return projected
+      return rc.unproject(coords as L.PointExpression)
     },
     [rc],
   )
 
-  const generateItemMarkers = useCallback(() => {
-    // only continue, if map is initialized, so we can use the project the markers correctly
+  const itemIcon = useMemo(
+    () =>
+      L.icon({
+        iconUrl: "/sprites/item.png",
+        iconSize: mapZoom < 8 ? [32, 32] : [50, 50],
+        className: itemStyles.itemicon,
+      }),
+    [mapZoom],
+  )
+
+  const itemMarkers = useCallback(() => {
     if (!isInitialized || !itemPlacements) return <></>
 
-    const itemIcon = L.icon({
-      iconUrl: "/sprites/item.png",
-      iconSize: mapZoom < 8 ? [32, 32] : [50, 50],
-      className: itemStyles.itemicon,
-    })
+    return itemPlacements.map(itemPlacement => (
+      <Marker
+        title={itemPlacement.item?.name}
+        key={itemPlacement.id}
+        icon={itemIcon}
+        ref={el => {
+          if (el) itemRefs.current.set(itemPlacement.id, el)
+        }}
+        position={coordsToLatlng(itemPlacement.coordinates) as LatLng}
+      >
+        <Popup>
+          {itemPlacement.item.name} x{itemPlacement.amount}
+        </Popup>
+      </Marker>
+    ))
+  }, [isInitialized, itemPlacements, coordsToLatlng, itemIcon])
 
-    const itemGroup = itemPlacements?.map(itemPlacement => {
-      const marker = (
-        <Marker
-          title={itemPlacement.item?.name}
-          key={itemPlacement.id}
-          icon={itemIcon}
-          ref={el => {
-            if (el) {
-              itemRefs.current.set(itemPlacement.id, el)
-            }
-          }}
-          position={coordsToLatlng(itemPlacement.coordinates) as LatLng}
-        >
-          <Popup>
-            {itemPlacement.item.name} x{itemPlacement.amount}
-          </Popup>
-        </Marker>
-      )
-      return marker
-    })
+  const projectAreaCoords = useCallback(
+    (coords: number[][] | [number[], number[]]) => {
+      if (!rc) return latLngBounds([0, 0], [0, 0])
+      return latLngBounds([
+        rc.unproject(coords[0] as L.PointExpression),
+        rc.unproject(coords[1] as L.PointExpression),
+      ])
+    },
+    [rc],
+  )
 
-    return itemGroup
-  }, [isInitialized, itemPlacements, mapZoom, coordsToLatlng])
-
-  const generatePolygons = () => {
-    const polygons = []
-    for (const location of locations ?? []) {
-      if (!location.boundsSw[0]) continue
-      polygons.push(
+  const polygons = useMemo(() => {
+    return (locations ?? []).flatMap(location => {
+      if (!location.boundsSw[0]) return []
+      return [
         <AreaRectangle
           key={location.name}
           areaName={location.name}
@@ -221,206 +174,45 @@ function MapHandler() {
           show={activeInfo === location.name}
           setActiveInfo={setActiveInfo}
           ref={el => {
-            if (el) {
-              areaRefs.current.set(location.name, el)
-            }
+            if (el) areaRefs.current.set(location.name, el)
           }}
         />,
-      )
-    }
-    return polygons
-  }
-
-  const methodSort = [
-    "walk",
-    "surf",
-    "old-rod",
-    "good-rod",
-    "super-rod",
-    "rock-smash",
-    "headbutt",
-    "dark-grass",
-    "grass-spots",
-    "cave-spots",
-    "bridge-spots",
-    "super-rod-spots",
-    "surf-spots",
-    "yellow-flowers",
-    "purple-flowers",
-    "red-flowers",
-    "rough-terrain",
-    "gift",
-    "gift-egg",
-    "only-one",
-  ]
-  const methodIndex: { [key: string]: number } = {}
-  methodSort.forEach((method, index) => {
-    methodIndex[method] = index
-  })
-
-  const generateEncounterTable = () => {
-    const empty = <></>
-    if (!activeInfo || !locations) return empty
-
-    const location = locations.find(element => element.name === activeInfo)
-    if (!location) return empty
-
-    const encounters = groupEncounters(location.encounters).sort(
-      (a, b) =>
-        methodIndex[a.encounterMethod] - methodIndex[b.encounterMethod] ||
-        b.encounterChance - a.encounterChance,
-    )
-
-    return (
-      // key on scroll area to force rerender when activeInfo changes, so that scroll position is reset
-      <ScrollArea key={activeInfo} className="h-full" type="auto">
-        <Table
-          onMouseEnter={_ => handleTableMouseOver(false)}
-          onMouseLeave={_ => handleTableMouseOver(true)}
-        >
-          <TableHeader>
-            <TableRow className="hover:bg-inherit">
-              <TableHead className="w-32">Pokemon</TableHead>
-              <TableHead className="w-16 text-center">Level</TableHead>
-              <TableHead className="w-12 text-center">Method</TableHead>
-              <TableHead className="w-4 text-center">Chance</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {encounters.map((element, index) => (
-              <Collapsible asChild>
-                <>
-                  <CollapsibleTrigger asChild>
-                    <TableRow className="hover:bg-primary/50" key={element.pokemon.name + index}>
-                      <TableCell className="flex items-center">
-                        <img
-                          className="-m-3 w-10"
-                          src={`/sprites/pokemon/${element.pokemon.id}.gif`}
-                        />
-                        <span className="ml-2">{element.pokemon.name}</span>
-                      </TableCell>
-                      <TableCell className="text-center">{`${element.minLevel} - ${element.maxLevel} `}</TableCell>
-                      <TableCell className="text-center">{element.encounterMethod} </TableCell>
-                      <TableCell className="text-center">
-                        {`${element.encounterChance}%`}{" "}
-                      </TableCell>
-                    </TableRow>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent asChild>
-                    <>
-                      {element.encounters.map((enc, childIndex) => (
-                        <TableRow
-                          className="hover:bg-primary/50"
-                          key={element.pokemon.name + index + element.pokemon.name + childIndex}
-                        >
-                          <TableCell className="flex items-center">
-                            <CornerDownRight className="mx-1" size={16} strokeWidth={1} />
-                            <img
-                              className="-m-3 w-10"
-                              src={`/sprites/pokemon/${element.pokemon.id}.gif`}
-                            />
-                            <span className="ml-2">{element.pokemon.name}</span>
-                          </TableCell>
-                          <TableCell className="text-center">{`${enc.minLevel} - ${enc.maxLevel} `}</TableCell>
-                          <TableCell className="text-center">{enc.encounterMethod} </TableCell>
-                          <TableCell className="text-center">
-                            {`${enc.encounterChance}%`}{" "}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </>
-                  </CollapsibleContent>
-                </>
-              </Collapsible>
-            ))}
-          </TableBody>
-          <TableCaption>Catchable pokemon at {activeInfo}</TableCaption>
-        </Table>
-      </ScrollArea>
-    )
-  }
-
-  const groupEncounters = (encounters: LocationEncounterWithPokemon[]) => {
-    const pokemonEncounters: GroupedEncounter[] = []
-
-    for (const encounter of encounters) {
-      let groupedEncounter = pokemonEncounters.find(
-        group =>
-          group.pokemon.id === encounter.pokemonId &&
-          group.encounterMethod === encounter.encounterMethod,
-      )
-
-      if (!groupedEncounter) {
-        pokemonEncounters.push({
-          encounterChance: encounter.encounterChance,
-          encounterMethod: encounter.encounterMethod,
-          encounters: [encounter],
-          maxLevel: encounter.maxLevel,
-          minLevel: encounter.minLevel,
-          pokemon: encounter.pokemon,
-        })
-        continue
-      }
-
-      groupedEncounter.encounters.push(encounter)
-      groupedEncounter.encounterChance += encounter.encounterChance
-      groupedEncounter.minLevel = Math.min(groupedEncounter.minLevel, encounter.minLevel)
-      groupedEncounter.maxLevel = Math.min(groupedEncounter.maxLevel, encounter.maxLevel)
-    }
-
-    return pokemonEncounters
-  }
-
-  const handleTableMouseOver = (enable: boolean) => {
-    if (!enable) map.scrollWheelZoom.disable()
-    else map.scrollWheelZoom.enable()
-  }
+      ]
+    })
+  }, [locations, activeInfo, projectAreaCoords])
 
   const latLngToPixelCoords = (latlng: L.LatLng) => {
     if (!rc) return L.point(0, 0)
-
-    const pixelCoords = rc.project(latlng)
-    return pixelCoords
+    return rc.project(latlng)
   }
 
-  const [pendingKeyEvent, setPendingKeyEvent] = useState(false)
   useMapEvents({
-    async keypress(e) {
-      if (pendingKeyEvent || e.originalEvent.key !== "a" || itemPopupRef.current?.isOpen()) return
-      setPendingKeyEvent(true)
-
-      // await new Promise(resolve => setTimeout(resolve, 2000))
+    keypress(e) {
+      if (e.originalEvent.key !== "a" || itemPopupRef.current?.isOpen()) return
       setFormPosition(mousePosition)
-      setPendingKeyEvent(false)
     },
     mousemove: e => {
-      const mousePos = e.latlng
-      setMousePosition(mousePos)
+      setMousePosition(e.latlng)
     },
   })
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const cachedEncounters = useMemo(() => generateEncounterTable(), [activeInfo, locations])
-
   return (
     <>
-      <LayerGroup ref={items}>{rc && isInitialized && generateItemMarkers()}</LayerGroup>
-      {/* FeatureGroup containing the rectangles of the encounter areas */}
-      <FeatureGroup>{rc && isInitialized && generatePolygons()}</FeatureGroup>
+      <LayerGroup>{rc && isInitialized && itemMarkers()}</LayerGroup>
+      <FeatureGroup>{rc && isInitialized && polygons}</FeatureGroup>
       {activeInfo && (
         <div
           ref={el => {
-            if (el) L.DomEvent.disableClickPropagation(el as HTMLElement) // stop leaflet mouse events over the table
+            if (el) L.DomEvent.disableClickPropagation(el as HTMLElement)
           }}
-          className="absolute right-0 bottom-0 z-10000 h-[50%] w-1/3 cursor-auto border-2 border-b-0 border-solid border-green-500 bg-white/50 p-1 text-black backdrop-blur-md"
+          className="bg-background border-border absolute top-0 right-0 z-10000 h-full w-1/3 min-w-93.75 cursor-auto border-t border-l border-solid p-1 text-black backdrop-blur-md"
         >
-          {cachedEncounters}
+          <EncounterTable activeInfo={activeInfo} locations={locations} />
         </div>
       )}
-
       {formPosition && (
         <Popup position={formPosition} ref={itemPopupRef}>
-          <ItemForm position={latLngToPixelCoords(formPosition)}></ItemForm>
+          <ItemForm position={latLngToPixelCoords(formPosition)} />
         </Popup>
       )}
     </>

@@ -1,4 +1,4 @@
-import { streamSetupLocations, streamSetupPokedex } from "@/api/AdminApi"
+import { streamSetupItems, streamSetupLocations, streamSetupPokedex } from "@/api/AdminApi"
 import { useEffect, useRef, useState } from "react"
 
 function Spinner() {
@@ -59,6 +59,13 @@ function DatabaseSetup() {
           disabled={isRunning}
         >
           {isRunning ? <Spinner /> : "Fill Locations (Hoenn)"}
+        </button>
+        <button
+          className="flex w-60 justify-center rounded-lg bg-yellow-600 p-2 font-bold disabled:bg-yellow-400"
+          onClick={() => runTask("Fill Items (Hoenn)", streamSetupItems)}
+          disabled={isRunning}
+        >
+          {isRunning ? <Spinner /> : "Fill Items (Hoenn)"}
         </button>
       </div>
 

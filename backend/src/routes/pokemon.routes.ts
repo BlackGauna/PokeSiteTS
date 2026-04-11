@@ -1,5 +1,5 @@
-import { getAllPokemon, getPokemonByIdOrName } from "@/db/queries/pokemon.queries"
 import Elysia, { t } from "elysia"
+import { getAllPokemon, getPokemonByIdOrName } from "../db/queries/pokemon.queries"
 
 const pokemonRoutes = new Elysia({ prefix: "/pokemon" })
   .get("/", async () => await getAllPokemon())

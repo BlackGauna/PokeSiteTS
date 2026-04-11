@@ -60,3 +60,6 @@ export const streamSetupPokedex = (onLog: (msg: string) => void) =>
 
 export const streamSetupLocations = (onLog: (msg: string) => void) =>
   streamAdminSetup("admin/setup/locations", onLog)
+
+export const streamSetupItems = (onLog: (msg: string) => void) =>
+  streamAdminSetup("admin/setup/items", onLog)

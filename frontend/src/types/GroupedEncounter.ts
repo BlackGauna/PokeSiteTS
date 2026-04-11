@@ -1,6 +1,6 @@
-import type { PokemonEncounterMethod } from "backend/src/db/enums/EncounterMethod"
-import type { LocationEncounter } from "backend/src/db/schemas/Location"
-import type { Pokemon } from "backend/src/db/schemas/Pokemon"
+import type { PokemonEncounterMethod } from "@/server/db/enums/EncounterMethod"
+import type { LocationEncounter } from "@/server/types/Location"
+import type { Pokemon } from "@/server/types/Pokemon"
 
 export type GroupedEncounter = {
   pokemon: Pokemon

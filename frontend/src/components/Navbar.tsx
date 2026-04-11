@@ -1,5 +1,3 @@
-type NavbarProps = {}
-
-export default function Navbar({}: NavbarProps) {
+export default function Navbar() {
   return <div>Navbar</div>
 }
