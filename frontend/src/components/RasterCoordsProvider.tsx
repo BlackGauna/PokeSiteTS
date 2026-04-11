@@ -61,7 +61,7 @@ const RasterCoordsProvider = ({
       tileSize: 256,
       maxNativeZoom: 6,
       maxZoom: maxZoom,
-      attribution: "Onur",
+      attribution: "",
     }).addTo(map)
   }, [map, initialZoom])
 

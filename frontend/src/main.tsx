@@ -3,20 +3,26 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 import { RouterProvider, createBrowserRouter } from "react-router-dom"
 import MapProvider from "./components/MapProvider.tsx"
-import Navbar from "./components/Navbar.tsx"
 import { ThemeProvider } from "./components/ThemeProvider.tsx"
 import "./global.css"
 import DatabaseSetup from "./pages/DatabaseSetup.tsx"
+import RootLayout from "./root.tsx"
 
 const router = createBrowserRouter([
   {
-    path: "/setup",
-    element: <DatabaseSetup />,
-  },
-  {
     path: "/",
-    element: <MapProvider />,
+    element: <RootLayout />,
     errorElement: <div>Error, site not found!</div>,
+    children: [
+      {
+        path: "/",
+        element: <MapProvider />,
+      },
+      {
+        path: "/setup",
+        element: <DatabaseSetup />,
+      },
+    ],
   },
 ])
 
@@ -26,10 +32,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system">
-        <div className="flex h-screen w-screen flex-col">
-          <Navbar />
-          <RouterProvider router={router} />
-        </div>
+        <RouterProvider router={router} />
       </ThemeProvider>
     </QueryClientProvider>
   </React.StrictMode>,
