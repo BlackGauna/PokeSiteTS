@@ -1,3 +1,25 @@
 .search-tooltip {
   scrollbar-width: thin;
+  scrollbar-color: var(--color-ring) var(--color-card) !important;
+}
+
+.leaflet-control-search {
+  background-color: var(--color-card) !important;
+}
+
+.search-button {
+  background-color: var(--card) !important;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}
+
+.search-tooltip {
+  background-color: var(--card) !important;
+}
+
+.search-input,
+.search-tip {
+  background-color: var(--color-muted) !important;
+  color: var(--card-foreground) !important;
 }

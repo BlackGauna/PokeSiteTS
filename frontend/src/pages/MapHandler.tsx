@@ -16,14 +16,20 @@ import {
   useMapEvents,
 } from "react-leaflet"
 
-import { useGetLocation, useGetRegionLocations, useGetRegionSearchIndex } from "../api/LocationApi.ts"
-import AreaRectangle from "../components/AreaRectangle.tsx"
+import {
+  useGetLocation,
+  useGetRegionLocations,
+  useGetRegionSearchIndex,
+} from "../api/LocationApi.ts"
+import AreaRectangle from "../components/leaflet/AreaRectangle.tsx"
 import { RasterCoordsContext } from "../components/RasterCoordsProvider.tsx"
 import itemStyles from "../styles/itemMarker.module.css"
 import "../styles/leaflet-search.css"
 
 import EncounterTable from "@/components/EncounterTable.tsx"
 import { ItemForm } from "@/components/ItemForm.tsx"
+import { Search } from "lucide-react"
+import { createRoot } from "react-dom/client"
 import { useGetItemPlacements } from "../api/ItemApi.ts"
 
 function MapHandler() {
@@ -49,7 +55,7 @@ function MapHandler() {
 
   const { data: locations } = useGetRegionLocations("hoenn")
   const { data: searchIndex } = useGetRegionSearchIndex("hoenn")
-  const { data: activeLocation } = useGetLocation(activeInfo)
+  const { data: activeLocation, isPending: locationPending } = useGetLocation(activeInfo)
   const { data: itemPlacements } = useGetItemPlacements()
 
   const searchIndexMap = useMemo(() => {
@@ -120,6 +126,21 @@ function MapHandler() {
     })
 
     map.addControl(searchControl as unknown as L.Control)
+
+    // Find the button in the DOM
+    const container = searchControl.getContainer()
+    if (!container) return
+    // container.style.backgroundColor = "var(--card)"
+
+    const btn = container.querySelector(".search-button") as HTMLElement
+
+    if (btn) {
+      // Clear the default background image
+      btn.style.backgroundImage = "none"
+      const root = createRoot(btn)
+      root.render(<Search className="text-card-foreground w-5" />)
+    }
+
     return () => {
       map.removeControl(searchControl as unknown as L.Control)
     }
@@ -198,10 +219,10 @@ function MapHandler() {
   }
 
   useMapEvents({
-    keypress(e) {
-      if (e.originalEvent.key !== "a" || itemPopupRef.current?.isOpen()) return
-      setFormPosition(mouseRef.current)
-    },
+    // keypress(e) {
+    //   if (e.originalEvent.key !== "a" || itemPopupRef.current?.isOpen()) return
+    //   setFormPosition(mouseRef.current)
+    // },
     mousemove: e => {
       mouseRef.current = e.latlng
     },
@@ -218,7 +239,7 @@ function MapHandler() {
           }}
           className="bg-background border-border absolute top-0 right-0 z-1000 h-full w-1/3 min-w-93.75 border-t border-l p-1"
         >
-          <EncounterTable activeInfo={activeInfo} location={activeLocation} />
+          <EncounterTable activeInfo={activeInfo} location={activeLocation} isPending={locationPending} />
         </div>
       )}
       {formPosition && (

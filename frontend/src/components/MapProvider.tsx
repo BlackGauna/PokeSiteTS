@@ -4,6 +4,7 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import MapHandler from "../pages/MapHandler"
 import RasterCoordsProvider from "./RasterCoordsProvider"
+import ZoomControls from "./leaflet/ZoomControls"
 
 function MapProvider() {
   return (
@@ -13,8 +14,10 @@ function MapProvider() {
       crs={L.CRS.Simple}
       preferCanvas={true}
       maxZoom={16}
+      zoomControl={false}
     >
       <RasterCoordsProvider initialZoom={0} maxZoom={16}>
+        <ZoomControls />
         <MapHandler />
       </RasterCoordsProvider>
     </MapContainer>

@@ -6,7 +6,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
+import { ArrowDownNarrowWide, ArrowDownWideNarrow, ArrowUpDown, Loader } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 import EncounterRow from "@/components/EncounterRow.tsx"
@@ -90,6 +90,7 @@ function groupEncounters(encounters: LocationEncounterWithPokemon[]): GroupedEnc
 type EncounterTableProps = {
   activeInfo: string
   location: LocationWithEncounters | undefined
+  isPending: boolean
 }
 
 // Separate inner component so that `key={activeInfo}` on it (set by the outer component)
@@ -110,6 +111,7 @@ function EncounterTableContent({ locationName, encounters }: ContentProps) {
     onSortingChange: setSorting,
     getCoreRowModel: coreRowModel,
     getSortedRowModel: sortedRowModel,
+    sortDescFirst: false,
   })
 
   function toggleRow(key: string) {
@@ -174,9 +176,9 @@ function EncounterTableContent({ locationName, encounters }: ContentProps) {
                   <div className="flex items-center gap-1">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getIsSorted() === "asc" ? (
-                      <ArrowUp size={13} />
+                      <ArrowDownNarrowWide size={13} />
                     ) : header.column.getIsSorted() === "desc" ? (
-                      <ArrowDown size={13} />
+                      <ArrowDownWideNarrow size={13} />
                     ) : (
                       <ArrowUpDown size={13} className="text-muted-foreground" />
                     )}
@@ -214,7 +216,18 @@ function EncounterTableContent({ locationName, encounters }: ContentProps) {
   )
 }
 
-export default function EncounterTable({ activeInfo, location }: EncounterTableProps) {
+export default function EncounterTable({ activeInfo, location, isPending }: EncounterTableProps) {
+  const [showSpinner, setShowSpinner] = useState(false)
+
+  useEffect(() => {
+    if (!isPending) {
+      setShowSpinner(false)
+      return
+    }
+    const id = setTimeout(() => setShowSpinner(true), 200)
+    return () => clearTimeout(id)
+  }, [isPending])
+
   // Pre-sort by method then chance descending so the initial view is ordered
   // without needing TanStack's controlled sorting state at startup.
   const encounters = useMemo(
@@ -229,6 +242,13 @@ export default function EncounterTable({ activeInfo, location }: EncounterTableP
         : [],
     [location],
   )
+
+  if (showSpinner)
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader className="animate-spin text-muted-foreground" size={32} />
+      </div>
+    )
 
   if (!location) return null
 
