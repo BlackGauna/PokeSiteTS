@@ -10,6 +10,7 @@ import { ArrowDownNarrowWide, ArrowDownWideNarrow, ArrowUpDown, Loader } from "l
 import { useEffect, useMemo, useRef, useState } from "react"
 
 import EncounterRow from "@/components/EncounterRow.tsx"
+import PokemonDetailModal from "@/components/PokemonDetailModal.tsx"
 import {
   Table,
   TableBody,
@@ -24,6 +25,7 @@ import type {
   LocationEncounterWithPokemon,
   LocationWithEncounters,
 } from "@/server/types/Location.ts"
+import type { Pokemon } from "@/server/types/Pokemon.ts"
 import type { GroupedEncounter } from "@/types/GroupedEncounter.ts"
 import { useMap } from "react-leaflet"
 import { ScrollArea } from "./ui/scroll-area"
@@ -102,7 +104,7 @@ type ContentProps = {
 
 function EncounterTableContent({ locationName, encounters }: ContentProps) {
   const [sorting, setSorting] = useState<SortingState>([{ id: "encounterMethod", desc: false }])
-  const [openRows, setOpenRows] = useState<Set<string>>(new Set())
+  const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null)
 
   const table = useReactTable({
     data: encounters,
@@ -113,15 +115,6 @@ function EncounterTableContent({ locationName, encounters }: ContentProps) {
     getSortedRowModel: sortedRowModel,
     sortDescFirst: false,
   })
-
-  function toggleRow(key: string) {
-    setOpenRows(prev => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }
 
   const map = useMap()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -157,6 +150,7 @@ function EncounterTableContent({ locationName, encounters }: ContentProps) {
 
   return (
     <div ref={containerRef} className="flex h-full flex-col overflow-hidden px-2">
+      <PokemonDetailModal pokemon={selectedPokemon} onClose={() => setSelectedPokemon(null)} />
       <Table className={gridLayout}>
         <TableHeader className="contents [&_tr]:border-0">
           {table.getHeaderGroups().map(headerGroup => (
@@ -193,7 +187,7 @@ function EncounterTableContent({ locationName, encounters }: ContentProps) {
       <ScrollArea className="flex-1 overflow-y-auto">
         <Table className={cn(gridLayout, "gap-y-1.5")}>
           <TableBody className="contents">
-            {table.getRowModel().rows.map((row, index) => {
+            {table.getRowModel().rows.map(row => {
               const enc = row.original
               const rowKey = `${enc.pokemon.id}_${enc.encounterMethod}`
               return (
@@ -201,9 +195,7 @@ function EncounterTableContent({ locationName, encounters }: ContentProps) {
                   key={rowKey}
                   enc={enc}
                   rowKey={rowKey}
-                  index={index}
-                  isOpen={openRows.has(rowKey)}
-                  onToggle={() => toggleRow(rowKey)}
+                  onSelect={setSelectedPokemon}
                 />
               )
             })}

@@ -1,6 +1,12 @@
+import type { PokemonPercentiles } from "@/server/db/queries/pokemon.queries"
 import type { PokemonWithNamesAndMoves } from "@/server/types/Pokemon"
 import { QueryClient, type QueryFunctionContext, useQuery } from "@tanstack/react-query"
 import { client } from "./client"
+
+export type PokemonDetail = {
+  pokemon: PokemonWithNamesAndMoves
+  percentiles: PokemonPercentiles
+}
 
 const pokemonKeys = {
   all: ["pokemon"] as const,
@@ -26,9 +32,8 @@ const fetchPokemon = async ({
   if (res.error) {
     throw res.error
   }
-  const pokemon = res.data[0]
 
-  return pokemon
+  return res.data as unknown as PokemonDetail
 }
 
 export const useAllPokemon = () => {
@@ -40,11 +45,12 @@ export const useAllPokemon = () => {
   return query
 }
 
-export const usePokemon = (name: string) => {
+export const usePokemon = (name: string, enabled = true) => {
   return useQuery({
     queryKey: pokemonKeys.detail(name),
     queryFn: fetchPokemon,
     retry: false,
+    enabled,
   })
 }
 

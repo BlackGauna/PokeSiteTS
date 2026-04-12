@@ -1,8 +1,63 @@
 import type { PokemonWithNamesAndMoves } from "@/server/types/Pokemon"
+import type { Type } from "../schemas/Shared"
 import { ilike } from "drizzle-orm"
 import { status } from "elysia"
 import { db } from "../db"
 import { pokemonTable } from "../schemas/Pokemon"
+
+type StatPercentile = {
+  global: number
+  byType: Partial<Record<Type, number>>
+}
+
+export type PokemonPercentiles = {
+  hp: StatPercentile
+  atk: StatPercentile
+  def: StatPercentile
+  spAtk: StatPercentile
+  spDef: StatPercentile
+  speed: StatPercentile
+}
+
+function pct(below: number, total: number): number {
+  return total === 0 ? 0 : Math.round((below / total) * 100)
+}
+
+export const getPokemonPercentiles = async (
+  id: number,
+  types: Type[],
+): Promise<PokemonPercentiles> => {
+  const all = await db.query.pokemonTable.findMany({
+    columns: { hp: true, atk: true, def: true, spAtk: true, spDef: true, speed: true, types: true },
+  })
+
+  const stats = await db.query.pokemonTable.findFirst({
+    where: { id },
+    columns: { hp: true, atk: true, def: true, spAtk: true, spDef: true, speed: true },
+  })
+
+  if (!stats) throw new Error(`Pokemon ${id} not found`)
+
+  const statKeys = ["hp", "atk", "def", "spAtk", "spDef", "speed"] as const
+
+  const result = {} as PokemonPercentiles
+
+  for (const key of statKeys) {
+    const value = stats[key]
+    const globalBelow = all.filter(p => p[key] < value).length
+    const byType: Partial<Record<Type, number>> = {}
+
+    for (const type of types) {
+      const typeRows = all.filter(p => (p.types as Type[]).includes(type))
+      const typeBelow = typeRows.filter(p => p[key] < value).length
+      byType[type] = pct(typeBelow, typeRows.length)
+    }
+
+    result[key] = { global: pct(globalBelow, all.length), byType }
+  }
+
+  return result
+}
 
 export const getPokemonIdByName = async (name: string) => {
   // extra rule for deoxys
